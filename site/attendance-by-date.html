@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پچھلی تاریخ کی حاضری | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("teacher");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="view-attendance.html"><span class="ic">&#128203;</span> حاضری دیکھیں</a></li>
+        <li><a href="attendance-by-date.html" class="active"><span class="ic">&#128197;</span> پچھلی تاریخ کی حاضری</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>پچھلی تاریخ کی حاضری لگائیں</h1>
+          <div class="sub">اگر آپ کسی دن حاضری نہ لگا سکے ہوں</div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:480px; margin:0 auto;">
+        <div class="form-group">
+          <label>ذمہ داری منتخب کریں (درجہ — وقت)</label>
+          <select class="input" id="dutySelect"><option>لوڈ ہو رہا ہے...</option></select>
+        </div>
+        <div class="form-group">
+          <label>تاریخ منتخب کریں</label>
+          <input class="input" type="date" id="dateSelect">
+        </div>
+        <a href="#" id="goBtn" class="btn btn-block btn-lg">حاضری لگائیں</a>
+      </div>
+
+      <div class="note warn" style="max-width:480px; margin:16px auto 0;">
+        نوٹ : حاضری اسی منتخب کردہ تاریخ پر محفوظ ہو گی۔ آج کی تاریخ میں تبدیل نہیں ہوگی۔
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAssignmentsForTeacher, SESSIONS } from "./js/data.js";
+
+    (async () => {
+      const user = await requireAuth("teacher");
+      if (!user) return;
+      bindLogout();
+      document.getElementById("dateSelect").value = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+
+      const assigns = await getAssignmentsForTeacher(user.uid);
+      const sel = document.getElementById("dutySelect");
+      sel.innerHTML = assigns.length
+        ? assigns.map(a => `<option value="${a.classId}|${a.session}">${a.className} — ${SESSIONS[a.session]}</option>`).join("")
+        : '<option value="">کوئی ذمہ داری نہیں</option>';
+
+      document.getElementById("goBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        const v = sel.value; if (!v) { const t=document.getElementById("toast"); if(t){t.textContent="براہِ کرم ذمہ داری منتخب کریں۔";t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600);} return; }
+        const [classId, session] = v.split("|");
+        const date = document.getElementById("dateSelect").value;
+        location.href = `mark-attendance.html?class=${classId}&session=${session}&date=${date}`;
+      });
+    })();
+  </script>
+</body>
+</html>

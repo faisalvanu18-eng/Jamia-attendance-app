@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ماہانہ رپورٹ | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle no-print" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar no-print" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html" class="active"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="report-head">
+        <img src="assets/logo.png" alt="Jamia" style="width:64px;">
+        <h1 style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--green-deep);">جامعہ اسلامیہ کوکن</h1>
+        <div style="color:var(--muted);font-size:13px;">ماہانہ حاضری رپورٹ</div>
+      </div>
+
+      <div class="topbar no-print"><div class="titles"><h1>ماہانہ رپورٹ</h1></div></div>
+
+      <div class="card no-print">
+        <div class="date-viewer">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>مہینہ</label>
+            <input class="input" type="month" id="month">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>درجہ / گروپ</label>
+            <select class="input" id="classSel"><option value="">تمام درجات</option></select>
+          </div>
+          <button class="btn" id="genBtn">رپورٹ بنائیں</button>
+          <button class="btn btn-outline" onclick="window.print()">&#128424; پرنٹ / PDF</button>
+        </div>
+      </div>
+
+      <h3 class="section-title" id="repTitle"></h3>
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th style="width:56px">نمبر</th><th class="name-cell">طالب علم</th><th>درجہ / گروپ</th><th style="width:90px">حاضر</th><th style="width:90px">غیر حاضر</th><th style="width:100px">فیصد</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="6" style="color:var(--muted)">مہینہ منتخب کر کے "رپورٹ بنائیں" دبائیں۔</td></tr></tbody>
+        </table>
+      </div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAllClasses, getMonthlyReport } from "./js/data.js";
+
+    function pctClass(p) { return p >= 75 ? "status-present" : p >= 50 ? "status-leave" : "status-absent"; }
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.className = "toast" + (isError ? " error" : "");
+      t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2600);
+    }
+
+    async function generate() {
+      const month = document.getElementById("month").value;
+      const classId = document.getElementById("classSel").value;
+      if (!month) return showToast("براہِ کرم مہینہ منتخب کریں۔", true);
+      document.getElementById("repTitle").textContent = "مہینہ : " + month;
+      const rep = await getMonthlyReport(month, classId || null);
+      const rows = document.getElementById("rows");
+      rows.innerHTML = rep.length
+        ? rep.map((r, i) => `<tr>
+            <td>${i + 1}</td>
+            <td class="name-cell">${r.name}</td>
+            <td>${r.className}</td>
+            <td class="status-present">${r.present}</td>
+            <td class="status-absent">${r.absent}</td>
+            <td class="${pctClass(r.percentage)}"><b>${r.percentage}%</b></td>
+          </tr>`).join("")
+        : '<tr><td colspan="6" style="color:var(--muted)">اس مہینے کے لیے کوئی ڈیٹا نہیں۔</td></tr>';
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+      document.getElementById("month").value = new Date().toISOString().slice(0, 7);
+      const classes = await getAllClasses();
+      document.getElementById("classSel").innerHTML =
+        '<option value="">تمام درجات</option>' + classes.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+      document.getElementById("genBtn").addEventListener("click", generate);
+      generate();
+    })();
+  </script>
+</body>
+</html>

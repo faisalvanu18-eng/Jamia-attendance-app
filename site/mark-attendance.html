@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حاضری لگائیں | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireLogin();</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="view-attendance.html"><span class="ic">&#128203;</span> حاضری دیکھیں</a></li>
+        <li><a href="attendance-by-date.html"><span class="ic">&#128197;</span> پچھلی تاریخ کی حاضری</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>حاضری لگائیں</h1>
+          <div class="sub">صرف غیر حاضر طلبہ منتخب کریں</div>
+          <div class="sub" id="metaClass">—</div>
+          <div class="sub">&#128197; تاریخ : <span id="metaDate">—</span></div>
+        </div>
+      </div>
+
+      <div id="lateBanner" class="note warn" style="display:none;">
+        &#9888; یہ پچھلی تاریخ کی حاضری ہے۔ ریکارڈ اسی اصل تاریخ پر محفوظ ہوگا اور مہتمم صاحب کو
+        "بعد میں درج شدہ" کے طور پر نظر آئے گا۔
+      </div>
+
+      <div id="holidayBanner" class="note" style="display:none; background:#fdecea; border:2px solid #e74c3c; color:#c0392b; font-weight:700; font-size:18px; text-align:center; padding:18px;"></div>
+
+      <div id="infoNote" class="note">
+        جو طلبہ غیر حاضر ہیں اُن کے سامنے نشان لگائیں۔ جو منتخب نہیں کیے جائیں گے وہ خود بخود
+        <b class="status-present">حاضر</b> شمار ہوں گے۔
+      </div>
+
+      <div class="card" id="attendanceCard">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:60px">نمبر</th>
+              <th class="name-cell">طالب علم کا نام</th>
+              <th style="width:210px">غیر حاضر</th>
+            </tr>
+          </thead>
+          <tbody id="studentRows">
+            <tr><td colspan="3" style="color:var(--muted)">لوڈ ہو رہا ہے...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="saveError" class="note error" style="display:none;margin-bottom:12px;" role="alert"></div>
+      <div class="actions" id="actionsRow">
+        <button class="btn btn-lg" id="saveBtn">&#128190; حاضری محفوظ کریں</button>
+        <button class="btn btn-outline" onclick="location.reload()">&#8635; دوبارہ ترتیب</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Absence reason modal -->
+  <div class="modal-overlay" id="reasonModal">
+    <div class="modal">
+      <h3>غیر حاضری کی وجہ منتخب کریں</h3>
+      <div class="stu-name" id="reasonStudentName">—</div>
+      <div class="hint">وجہ منتخب کرنے کے بعد مزید کچھ نہیں پوچھا جائے گا۔</div>
+
+      <button class="reason-btn sick"  data-reason="sick"><span>بیمار ہے</span><span class="r-ic">&#128564;</span></button>
+      <button class="reason-btn leave" data-reason="leave"><span>رخصت پر ہے</span><span class="r-ic">&#127968;</span></button>
+      <button class="reason-btn other" data-reason="other"><span>دیگر</span><span class="r-ic">&#8943;</span></button>
+
+      <button class="btn btn-outline btn-block" id="reasonCancel" style="margin-top:8px;">منسوخ کریں</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getClass, getAssignment, getStudentsByClass, saveAttendance, getAttendance, getHolidayStatus, SESSIONS, REASONS } from "./js/data.js";
+
+    const params = new URLSearchParams(location.search);
+    const classId = params.get("class");
+    const session = params.get("session") || "morning";
+    const date = params.get("date") || (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+    const today = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+
+    const overlay = document.getElementById("reasonModal");
+    const nameEl = document.getElementById("reasonStudentName");
+    let currentChk = null;
+    const marks = {}; // studentId -> { status:'absent', reason }
+
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+      bindLogout();
+
+      document.getElementById("metaDate").textContent = date;
+      if (date < today) document.getElementById("lateBanner").style.display = "block";
+
+      if (!classId) {
+        document.getElementById("studentRows").innerHTML =
+          '<tr><td colspan="3" style="color:var(--red)">کوئی درجہ منتخب نہیں ہوا۔ ڈیش بورڈ سے حاضری لگائیں۔</td></tr>';
+        return;
+      }
+
+      // Access control: a teacher may only mark his own assigned class+session.
+      const assignment = await getAssignment(classId, session);
+      if (user.role === "teacher" && (!assignment || assignment.teacherId !== user.uid)) {
+        document.getElementById("studentRows").innerHTML =
+          '<tr><td colspan="3" style="color:var(--red)">آپ کو اس درجہ/وقت کی حاضری کی اجازت نہیں ہے۔</td></tr>';
+        document.getElementById("saveBtn").disabled = true;
+        return;
+      }
+
+      const cls = await getClass(classId);
+      document.getElementById("metaClass").textContent =
+        (cls ? cls.name : classId) + " — " + SESSIONS[session] + " کی حاضری";
+
+      // ---- HOLIDAY CHECK (class-wise; Friday always full-day holiday) ----
+      // If this session is a holiday, block attendance ENTIRELY:
+      // show "Holiday – No Attendance", and hide every Present/Absent option.
+      const clsStatus = await getHolidayStatus(date, classId);
+      const sess = clsStatus[session] || {};
+      if (sess.holiday) {
+        let detail;
+        if (sess.reason === "friday") {
+          detail = "جمعہ کی تعطیل ہے۔ آج حاضری نہیں لگ سکتی۔";
+        } else if (clsStatus.fullDay) {
+          detail = "آج پورے دن کی تعطیل ہے۔ حاضری نہیں لگ سکتی۔";
+        } else if (session === "morning") {
+          detail = "آج صبح کی تعطیل ہے۔ صبح کی حاضری نہیں لگ سکتی۔";
+        } else {
+          detail = "آج دوپہر کی تعطیل ہے۔ دوپہر کی حاضری نہیں لگ سکتی۔";
+        }
+        const hb = document.getElementById("holidayBanner");
+        hb.innerHTML = `\u26D4 تعطیل — کوئی حاضری نہیں<br>` +
+                       `<span style="font-size:14px;font-weight:600;">Holiday – No Attendance</span><br>` +
+                       `<span style="font-size:14px;font-weight:500;">${detail}</span>`;
+        hb.style.display = "block";
+        // Remove/disable ALL attendance controls so nothing can be marked.
+        document.getElementById("infoNote").style.display = "none";
+        document.getElementById("attendanceCard").style.display = "none";
+        document.getElementById("actionsRow").style.display = "none";
+        document.getElementById("saveBtn").disabled = true;
+        return;
+      }
+
+      const students = await getStudentsByClass(classId);
+      const tbody = document.getElementById("studentRows");
+      if (!students.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">اس درجہ میں ابھی کوئی طالب علم درج نہیں (طلبہ کی فہرست بعد میں شامل ہوگی)۔</td></tr>';
+        document.getElementById("saveBtn").disabled = true;
+        return;
+      }
+
+      // Pre-fill from any previously saved attendance for this date/class/session.
+      const existing = await getAttendance(date, classId, session);
+
+      tbody.innerHTML = students.map((s, i) => {
+        const rec = existing && existing.records ? existing.records[s.id] : null;
+        const isAbsent = rec && rec.status === "absent";
+        if (isAbsent) marks[s.id] = { status: "absent", reason: rec.reason || "other" };
+        return `
+        <tr data-id="${s.id}">
+          <td>${i + 1}</td>
+          <td class="name-cell">${s.name}</td>
+          <td>
+            <input type="checkbox" class="chk absent-chk" data-id="${s.id}" data-name="${s.name}" ${isAbsent ? "checked" : ""}>
+            <span class="reason-label status-absent">${isAbsent ? REASONS[rec.reason || "other"] : ""}</span>
+          </td>
+        </tr>`;
+      }).join("");
+
+      tbody.querySelectorAll(".absent-chk").forEach(chk => {
+        chk.addEventListener("change", function () {
+          if (this.checked) {
+            currentChk = this; nameEl.textContent = this.dataset.name; overlay.classList.add("show");
+          } else {
+            delete marks[this.dataset.id];
+            this.closest("tr").querySelector(".reason-label").textContent = "";
+          }
+        });
+      });
+
+      overlay.querySelectorAll(".reason-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+          if (currentChk) {
+            const id = currentChk.dataset.id;
+            marks[id] = { status: "absent", reason: this.dataset.reason };
+            currentChk.closest("tr").querySelector(".reason-label").textContent = REASONS[this.dataset.reason];
+          }
+          overlay.classList.remove("show");
+        });
+      });
+      document.getElementById("reasonCancel").addEventListener("click", () => {
+        if (currentChk) currentChk.checked = false;
+        overlay.classList.remove("show");
+      });
+
+      document.getElementById("saveBtn").addEventListener("click", async () => {
+        const records = {};
+        students.forEach(s => { records[s.id] = marks[s.id] || { status: "present", reason: "" }; });
+        const btn = document.getElementById("saveBtn");
+        btn.disabled = true; btn.textContent = "محفوظ ہو رہا ہے...";
+        try {
+          const saved = await saveAttendance({ date, classId, session, records, markedBy: user.uid });
+          localStorage.setItem("lastSaved", JSON.stringify({
+            classId, className: cls ? cls.name : classId, session, sessionLabel: SESSIONS[session],
+            date, late: saved.late, summary: saved.summary
+          }));
+          location.href = "attendance-saved.html";
+        } catch (err) {
+          const msg = err.serverMessage || err.message || err.code || "نامعلوم خرابی";
+          const errorBox = document.getElementById("saveError");
+          if (errorBox) { errorBox.textContent = "محفوظ کرنے میں خرابی: " + msg; errorBox.style.display = "block"; }
+          btn.disabled = false; btn.textContent = "حاضری محفوظ کریں";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

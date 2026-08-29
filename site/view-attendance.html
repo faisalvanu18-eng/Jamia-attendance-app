@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حاضری دیکھیں | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("teacher");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="view-attendance.html" class="active"><span class="ic">&#128203;</span> حاضری دیکھیں</a></li>
+        <li><a href="attendance-by-date.html"><span class="ic">&#128197;</span> پچھلی تاریخ کی حاضری</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>محفوظ شدہ حاضری دیکھیں</h1>
+          <div class="sub">اپنے درجوں کی حاضری کا ریکارڈ یہاں دیکھیں</div>
+        </div>
+      </div>
+
+      <div class="card no-print" style="max-width:550px; margin:0 auto;">
+        <div class="date-viewer" style="flex-direction:column; gap:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>تاریخ منتخب کریں</label>
+            <input class="input" type="date" id="viewDate">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>درجہ / گروپ (اختیاری)</label>
+            <select class="input" id="classFilter">
+              <option value="">— تمام ذمہ داریاں —</option>
+            </select>
+          </div>
+          <button class="btn btn-block" id="viewBtn">&#128065; حاضری دیکھیں</button>
+        </div>
+      </div>
+
+      <h3 class="section-title" id="dateTitle" style="margin-top:20px;"></h3>
+      <div id="content"><p style="text-align:center;color:var(--muted)">اوپر تاریخ منتخب کر کے "حاضری دیکھیں" دبائیں۔</p></div>
+
+      <div class="actions no-print" style="margin-top:16px;">
+        <button class="btn btn-outline" onclick="window.print()">&#128424; پرنٹ / PDF</button>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAssignmentsForTeacher, getAttendance, getStudentsByClass, getClass, SESSIONS, REASONS } from "./js/data.js";
+
+    let assignments = [];
+
+    (async () => {
+      const user = await requireAuth("teacher");
+      if (!user) return;
+      bindLogout();
+
+      const today = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+      document.getElementById("viewDate").value = today;
+
+      // Load teacher's assignments
+      assignments = await getAssignmentsForTeacher(user.uid);
+      
+      // Populate class filter (unique classes)
+      const classFilter = document.getElementById("classFilter");
+      const uniqueClasses = [];
+      const seenIds = new Set();
+      for (const a of assignments) {
+        if (!seenIds.has(a.classId)) {
+          seenIds.add(a.classId);
+          uniqueClasses.push(a);
+        }
+      }
+      classFilter.innerHTML = '<option value="">— تمام ذمہ داریاں —</option>' +
+        uniqueClasses.map(a => `<option value="${a.classId}">${a.className}</option>`).join("");
+
+      document.getElementById("viewBtn").addEventListener("click", render);
+      
+      // Also load on URL params
+      const params = new URLSearchParams(location.search);
+      if (params.get("date")) {
+        document.getElementById("viewDate").value = params.get("date");
+        if (params.get("class")) classFilter.value = params.get("class");
+        render();
+      }
+    })();
+
+    async function render() {
+      const date = document.getElementById("viewDate").value;
+      const classIdFilter = document.getElementById("classFilter").value;
+      const box = document.getElementById("content");
+      
+      if (!date) {
+        box.innerHTML = '<div class="card"><p style="text-align:center;color:var(--muted)">براہِ کرم تاریخ منتخب کریں۔</p></div>';
+        return;
+      }
+
+      document.getElementById("dateTitle").textContent = "تاریخ : " + date;
+      box.innerHTML = '<p style="text-align:center;"><span class="loading-spinner"></span> لوڈ ہو رہا ہے...</p>';
+
+      // Filter assignments
+      let toShow = assignments;
+      if (classIdFilter) {
+        toShow = assignments.filter(a => a.classId === classIdFilter);
+      }
+
+      let html = "";
+      let found = false;
+
+      for (const assign of toShow) {
+        const att = await getAttendance(date, assign.classId, assign.session);
+        if (!att) continue;
+        found = true;
+
+        const cls = await getClass(assign.classId);
+        const students = await getStudentsByClass(assign.classId);
+        const smap = Object.fromEntries(students.map(s => [s.id, s.name]));
+        
+        const rows = Object.entries(att.records || {}).map(([sid, r]) => ({
+          name: smap[sid] || sid, status: r.status, reason: r.reason
+        })).sort((a, b) => a.status === b.status ? 0 : a.status === "absent" ? -1 : 1);
+
+        html += `
+        <div class="card">
+          <h3>${cls ? cls.name : assign.classId} — ${assign.session === "morning" ? "&#9728;" : "&#127774;"} ${SESSIONS[assign.session]}
+            ${att.late ? '<span class="badge-late">بعد میں درج</span>' : ''}
+          </h3>
+          <div class="stats-row" style="grid-template-columns: repeat(3, 1fr); margin-bottom:14px;">
+            <div class="stat" style="padding:12px;">
+              <div class="lbl">کل طلبہ</div>
+              <div class="num" style="font-size:22px;">${att.summary.total}</div>
+            </div>
+            <div class="stat" style="padding:12px;">
+              <div class="lbl">حاضر</div>
+              <div class="num green" style="font-size:22px;">${att.summary.present}</div>
+            </div>
+            <div class="stat" style="padding:12px;">
+              <div class="lbl">غیر حاضر</div>
+              <div class="num red" style="font-size:22px;">${att.summary.absent}</div>
+            </div>
+          </div>
+          <table class="tbl">
+            <thead><tr>
+              <th style="width:50px">نمبر</th>
+              <th class="name-cell">طالب علم</th>
+              <th style="width:100px">حالت</th>
+              <th style="width:110px">وجہ</th>
+            </tr></thead>
+            <tbody>
+              ${rows.map((r, i) => `<tr>
+                <td>${i + 1}</td>
+                <td class="name-cell">${r.name}</td>
+                <td class="${r.status === 'absent' ? 'status-absent' : 'status-present'}">${r.status === 'absent' ? 'غیر حاضر' : 'حاضر'}</td>
+                <td class="${r.reason === 'leave' ? 'status-leave' : r.status === 'absent' ? 'status-absent' : ''}">${r.status === 'absent' ? (REASONS[r.reason] || 'دیگر') : '—'}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`;
+      }
+
+      if (!found) {
+        box.innerHTML = '<div class="card"><p style="text-align:center;color:var(--muted)">اس تاریخ کی کوئی حاضری محفوظ نہیں ہے۔</p></div>';
+      } else {
+        box.innerHTML = html;
+      }
+    }
+  </script>
+</body>
+</html>

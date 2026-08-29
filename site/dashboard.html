@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>استاذ کا ڈیش بورڈ | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("teacher");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="dashboard.html" class="active"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="view-attendance.html"><span class="ic">&#128203;</span> حاضری دیکھیں</a></li>
+        <li><a href="attendance-by-date.html"><span class="ic">&#128197;</span> پچھلی تاریخ کی حاضری</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles"><h1>استاذ کا ڈیش بورڈ</h1></div>
+        <div class="welcome-box">
+          <div class="hi">خوش آمدید!</div>
+          <div class="name" id="teacherName">...</div>
+          <a href="#" id="logoutBtn2" class="btn btn-red btn-sm">لاگ آؤٹ</a>
+        </div>
+      </div>
+
+      <h2 class="section-title" id="salam">السلام علیکم</h2>
+      <p style="text-align:center; color:var(--green-deep); font-size:19px; margin-bottom:18px;">آپ کی ذمہ داریاں</p>
+
+      <div id="dutyMorning"></div>
+      <div id="dutyAfternoon"></div>
+      <div id="dutyEmpty"></div>
+
+      <div class="note warn">
+        &#128276; نوٹ: صرف غیر حاضر طلبہ منتخب کریں — باقی سب خود بخود حاضر شمار ہوں گے۔
+        صبح کی نگرانی 8:30، دوپہر کی نگرانی 3:30 بجے۔ (یہ لازمی وقت نہیں، صرف نگرانی کے لیے ہے۔)
+      </div>
+
+      <!-- Quick links for teacher -->
+      <div class="card" style="margin-top:20px;">
+        <div class="links-title">فوری لنکس</div>
+        <div class="links-grid">
+          <a href="view-attendance.html" class="link-card">
+            <span class="lic">&#128203;</span> حاضری دیکھیں
+          </a>
+          <a href="attendance-by-date.html" class="link-card">
+            <span class="lic">&#128197;</span> پچھلی تاریخ کی حاضری
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAssignmentsForTeacher, SESSIONS } from "./js/data.js";
+
+    (async () => {
+      const user = await requireAuth("teacher");
+      if (!user) return;
+      bindLogout();
+      document.getElementById("teacherName").textContent = user.name || user.email;
+      document.getElementById("salam").textContent = "السلام علیکم " + (user.name || "");
+
+      const today = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+      const assigns = await getAssignmentsForTeacher(user.uid);
+
+      const card = (a) => `
+        <div class="duty-card">
+          <div class="dtitle">${a.className}
+            <span class="sun">${a.session === "morning" ? "&#9728;" : "&#127774;"}</span>
+          </div>
+          <div class="dtime">${SESSIONS[a.session]} کی حاضری</div>
+          <a class="btn" href="mark-attendance.html?class=${a.classId}&session=${a.session}&date=${today}">حاضری لگائیں</a>
+        </div>`;
+
+      const morning = assigns.filter(a => a.session === "morning");
+      const afternoon = assigns.filter(a => a.session === "afternoon");
+
+      const mBox = document.getElementById("dutyMorning");
+      const aBox = document.getElementById("dutyAfternoon");
+      if (morning.length)
+        mBox.innerHTML = `<p style="color:var(--gold-active);font-weight:600;margin:6px 0">&#9728; صبح</p>` + morning.map(card).join("");
+      if (afternoon.length)
+        aBox.innerHTML = `<p style="color:var(--gold-active);font-weight:600;margin:14px 0 6px">&#127774; دوپہر</p>` + afternoon.map(card).join("");
+      if (!assigns.length)
+        document.getElementById("dutyEmpty").innerHTML =
+          '<p style="text-align:center;color:var(--muted)">آپ کے لیے کوئی ذمہ داری تفویض نہیں ہوئی۔</p>';
+    })();
+  </script>
+</body>
+</html>

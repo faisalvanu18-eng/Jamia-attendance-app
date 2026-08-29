@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تاریخ کے حساب سے حاضری | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireLogin();</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu" id="sideMenu">
+        <!-- Populated by JS based on role -->
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles"><h1>تاریخ کے حساب سے حاضری</h1></div>
+      </div>
+
+      <div class="card no-print">
+        <div class="date-viewer">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>تاریخ منتخب کریں</label>
+            <input class="input" type="date" id="viewDate">
+          </div>
+          <button class="btn" id="viewBtn">دیکھیں</button>
+          <button class="btn btn-outline" onclick="window.print()">&#128424; پرنٹ / PDF</button>
+        </div>
+      </div>
+
+      <h3 class="section-title" id="dateTitle"></h3>
+      <div id="content"><p style="text-align:center;color:var(--muted)">لوڈ ہو رہا ہے...</p></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAttendanceByDate, getStudentsByClass, getClass, getAssignment, SESSIONS, REASONS } from "./js/data.js";
+
+    const params = new URLSearchParams(location.search);
+    let date = params.get("date") || (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+
+    (async () => {
+      // Allow both admin and teacher to view this page (no role restriction)
+      const user = await requireAuth();
+      if (!user) return;
+      bindLogout();
+
+      // Dynamic sidebar based on role
+      const menu = document.getElementById("sideMenu");
+      if (user.role === "admin") {
+        menu.innerHTML = `
+          <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+          <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+          <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+          <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+          <li><a href="attendance-detail.html" class="active"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+          <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+          <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+          <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+          <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>`;
+      } else {
+        menu.innerHTML = `
+          <li><a href="dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+          <li><a href="view-attendance.html"><span class="ic">&#128203;</span> حاضری دیکھیں</a></li>
+          <li><a href="attendance-detail.html" class="active"><span class="ic">&#128197;</span> تاریخ کے حساب سے حاضری</a></li>
+          <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>`;
+      }
+      // Re-bind logout after replacing the dynamic sidebar.
+      bindLogout();
+
+      document.getElementById("viewDate").value = date;
+      document.getElementById("viewBtn").addEventListener("click", () => {
+        date = document.getElementById("viewDate").value;
+        location.href = "attendance-detail.html?date=" + date;
+      });
+      render();
+    })();
+
+    async function render() {
+      document.getElementById("dateTitle").textContent = "تاریخ : " + date;
+      const docs = await getAttendanceByDate(date);
+      const box = document.getElementById("content");
+      if (!docs.length) {
+        box.innerHTML = '<div class="card"><p style="text-align:center;color:var(--muted)">اس تاریخ کی کوئی حاضری محفوظ نہیں ہے۔</p></div>';
+        return;
+      }
+      docs.sort((a, b) => a.session.localeCompare(b.session));
+      let html = "";
+      for (const d of docs) {
+        const cls = await getClass(d.classId);
+        const assign = await getAssignment(d.classId, d.session);
+        const students = await getStudentsByClass(d.classId);
+        const smap = Object.fromEntries(students.map(s => [s.id, s.name]));
+        const rows = Object.entries(d.records || {}).map(([sid, r]) => ({
+          name: smap[sid] || sid, status: r.status, reason: r.reason
+        })).sort((a, b) => a.status === b.status ? 0 : a.status === "absent" ? -1 : 1);
+
+        html += `
+        <div class="card">
+          <h3>${cls ? cls.name : d.classId} — ${d.session === "morning" ? "&#9728;" : "&#127774;"} ${SESSIONS[d.session]}
+            ${d.late ? '<span class="badge-late">بعد میں درج</span>' : ''}
+          </h3>
+          <div class="meta-row">
+            <span>استاذ : ${assign ? assign.teacherName : "—"}</span>
+            <span>کل : <b>${d.summary.total}</b></span>
+            <span class="status-present">حاضر : ${d.summary.present}</span>
+            <span class="status-absent">غیر حاضر : ${d.summary.absent}</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th style="width:56px">نمبر</th><th class="name-cell">طالب علم</th><th style="width:110px">حالت</th><th style="width:120px">وجہ</th></tr></thead>
+            <tbody>
+              ${rows.map((r, i) => `<tr>
+                <td>${i + 1}</td>
+                <td class="name-cell">${r.name}</td>
+                <td class="${r.status === 'absent' ? 'status-absent' : 'status-present'}">${r.status === 'absent' ? 'غیر حاضر' : 'حاضر'}</td>
+                <td class="${r.reason === 'leave' ? 'status-leave' : 'status-absent'}">${r.status === 'absent' ? (REASONS[r.reason] || 'دیگر') : '—'}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`;
+      }
+      box.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

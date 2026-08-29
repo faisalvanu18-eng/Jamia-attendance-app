@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طالب علم کا ریکارڈ | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle no-print" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar no-print" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html" class="active"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <!-- Printable report header -->
+      <div class="report-head">
+        <img src="assets/logo.png" alt="Jamia" style="width:64px;">
+        <h1 style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--green-deep);">جامعہ اسلامیہ کوکن</h1>
+        <div style="color:var(--muted);font-size:13px;">طالب علم حاضری رپورٹ</div>
+      </div>
+
+      <div class="topbar no-print">
+        <div class="titles"><h1>طالب علم کا حاضری ریکارڈ</h1></div>
+        <div class="actions" style="margin:0;">
+          <button class="btn btn-red" onclick="window.print()">&#128196; PDF / پرنٹ</button>
+          <a href="student-search.html" class="btn btn-outline">واپس</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="meta-row" id="studMeta"><span>لوڈ ہو رہا ہے...</span></div>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat"><div class="lbl">کل حاضری فیصد</div><div class="num green" id="pct">—</div></div>
+        <div class="stat"><div class="lbl">حاضر (سیشن)</div><div class="num" id="tPresent">—</div></div>
+        <div class="stat"><div class="lbl">غیر حاضر (سیشن)</div><div class="num red" id="tAbsent">—</div></div>
+        <div class="stat"><div class="lbl">کل سیشن</div><div class="num" id="tSessions">—</div></div>
+      </div>
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat"><div class="lbl">بیمار</div><div class="num orange" id="tSick">—</div></div>
+        <div class="stat"><div class="lbl">رخصت پر</div><div class="num orange" id="tLeave">—</div></div>
+        <div class="stat"><div class="lbl">دیگر</div><div class="num" id="tOther">—</div></div>
+      </div>
+
+      <div class="card">
+        <h3>روزانہ حاضری</h3>
+        <table class="tbl">
+          <thead><tr><th class="name-cell">تاریخ</th><th>&#9728; صبح</th><th>&#127774; دوپہر</th><th>وجہ</th></tr></thead>
+          <tbody id="histRows"><tr><td colspan="4" style="color:var(--muted)">لوڈ ہو رہا ہے...</td></tr></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { searchStudents, getClass, getStudentHistory, REASONS } from "./js/data.js";
+
+    const id = new URLSearchParams(location.search).get("id");
+
+    function cell(rec) {
+      if (!rec) return '<span style="color:#bbb">—</span>';
+      return rec.status === "present"
+        ? '<span class="status-present">حاضر</span>'
+        : '<span class="status-absent">غیر حاضر</span>';
+    }
+    function reasonOf(row) {
+      const recs = [row.morning, row.afternoon].filter(r => r && r.status === "absent");
+      if (!recs.length) return "—";
+      return recs.map(r => REASONS[r.reason] || "دیگر").join("، ");
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+
+      const all = await searchStudents("");
+      const stud = all.find(s => s.id === id);
+      if (!stud) { document.getElementById("studMeta").innerHTML = '<span style="color:var(--red)">طالب علم نہیں ملا۔</span>'; return; }
+
+      document.getElementById("studMeta").innerHTML =
+        `<span>نام : <b>${stud.name}</b></span><span>درجہ / گروپ : ${stud.className}</span>`;
+
+      const { rows, totals } = await getStudentHistory(id, null, null);
+      document.getElementById("pct").textContent = totals.percentage + "%";
+      document.getElementById("tPresent").textContent = totals.present;
+      document.getElementById("tAbsent").textContent = totals.absent;
+      document.getElementById("tSessions").textContent = totals.sessions;
+      document.getElementById("tSick").textContent = totals.sick;
+      document.getElementById("tLeave").textContent = totals.leave;
+      document.getElementById("tOther").textContent = totals.other;
+
+      document.getElementById("histRows").innerHTML = rows.length
+        ? rows.map(r => `<tr>
+            <td class="name-cell">${r.date}</td>
+            <td>${cell(r.morning)}</td>
+            <td>${cell(r.afternoon)}</td>
+            <td>${reasonOf(r)}</td>
+          </tr>`).join("")
+        : '<tr><td colspan="4" style="color:var(--muted)">ابھی کوئی حاضری ریکارڈ نہیں۔</td></tr>';
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حاضری محفوظ ہو گئی | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireLogin();</script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="view-attendance.html"><span class="ic">&#128203;</span> حاضری دیکھیں</a></li>
+        <li><a href="attendance-by-date.html"><span class="ic">&#128197;</span> پچھلی تاریخ کی حاضری</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles"><h1>حاضری محفوظ ہو گئی</h1></div>
+      </div>
+
+      <div class="card" style="max-width:480px; margin:0 auto; text-align:center;">
+        <div class="confirm-icon">&#10003;</div>
+        <p style="color:var(--green-deep); font-size:18px;" id="savedTitle">حاضری کامیابی کے ساتھ محفوظ ہو گئی۔</p>
+        <p style="color:var(--muted); font-size:14px; margin-top:6px;">
+          جو طلبہ غیر حاضر منتخب نہیں کیے گئے وہ خود کار طور پر حاضر شمار ہوئے ہیں۔
+        </p>
+        <div id="lateNote" class="note warn" style="display:none;margin-top:10px;">
+          &#9888; یہ حاضری پچھلی تاریخ کے لیے درج کی گئی۔
+        </div>
+
+        <h3 style="margin-top:20px;">خلاصہ</h3>
+        <div class="summary">
+          <div class="row"><span>کل طلبہ :</span><span class="v" id="sTotal" style="color:var(--green-deep)">0</span></div>
+          <div class="row"><span>حاضر :</span><span class="v status-present" id="sPresent">0</span></div>
+          <div class="row"><span>غیر حاضر :</span><span class="v status-absent" id="sAbsent">0</span></div>
+        </div>
+
+        <div class="actions">
+          <a href="dashboard.html" class="btn">&#127968; ڈیش بورڈ پر جائیں</a>
+          <a href="#" id="viewListBtn" class="btn btn-outline">&#128065; فہرست دیکھیں</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+      bindLogout();
+
+      const data = JSON.parse(localStorage.getItem("lastSaved") || "null");
+      if (data) {
+        document.getElementById("savedTitle").textContent =
+          (data.sessionLabel || "") + " کی حاضری کامیابی کے ساتھ محفوظ ہو گئی۔";
+        document.getElementById("sTotal").textContent = data.summary.total;
+        document.getElementById("sPresent").textContent = data.summary.present;
+        document.getElementById("sAbsent").textContent = data.summary.absent;
+        if (data.late) document.getElementById("lateNote").style.display = "block";
+        const back = user.role === "admin" ? "admin-dashboard.html" : "dashboard.html";
+        document.querySelector(".actions .btn").setAttribute("href", back);
+        document.getElementById("viewListBtn").href =
+          (user.role === "admin" ? "attendance-detail.html" : "view-attendance.html") +
+          "?date=" + encodeURIComponent(data.date) +
+          "&class=" + encodeURIComponent(data.classId || "") +
+          "&session=" + encodeURIComponent(data.session);
+      }
+    })();
+  </script>
+</body>
+</html>

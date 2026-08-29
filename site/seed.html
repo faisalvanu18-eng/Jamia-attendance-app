@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ڈیٹا سیٹ اپ (Seed) | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="seed.html" class="active"><span class="ic">&#127793;</span> نمونہ ڈیٹا</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles"><h1>نمونہ ڈیٹا داخل کریں (Seed)</h1></div>
+      </div>
+
+      <div class="card" style="max-width:640px;margin:0 auto;">
+        <p style="color:var(--green-deep);font-size:15px;">
+          یہ صفحہ صرف ایک بار استعمال کریں۔ یہ نمونہ درجات اور طلبہ Firestore میں شامل کرے گا
+          تاکہ آپ سسٹم آزما سکیں۔ (صرف مہتمم/admin استعمال کر سکتا ہے۔)
+        </p>
+        <p style="color:var(--muted);font-size:13px;margin:8px 0 16px;">
+          This adds sample classes &amp; students so you can test. Run once.
+        </p>
+
+        <div id="seedError" class="note warn" style="display:none;"></div>
+
+        <button class="btn btn-block" id="seedBtn">نمونہ درجات و طلبہ داخل کریں</button>
+
+        <div id="seedLog" class="note" style="display:none;margin-top:16px;"></div>
+
+        <div class="actions" style="margin-top:16px;">
+          <a href="admin-dashboard.html" class="btn btn-outline">ڈیش بورڈ پر جائیں</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { db } from "./js/firebase-init.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const log = document.getElementById("seedLog");
+    const errBox = document.getElementById("seedError");
+
+    // Sample classes and their students.
+    const CLASSES = [
+      { id: "arabi-shashm", name: "عربی ششم", sessions: ["صبح", "دوپہر"],
+        students: ["محمد احمد","عبد اللہ","محمد یوسف","عادل خان","متقان علی","سعد فاروق","محمد حارث","فینان احمد"] },
+      { id: "arabi-chaharm", name: "عربی چہارم (شافعی طلبہ)", sessions: ["صبح", "دوپہر"],
+        students: ["زید انصاری","بلال شیخ","عمار خان","طلحہ قریشی","ہارون ملک"] },
+      { id: "dora-hadith", name: "دورہ حدیث", sessions: ["صبح"],
+        students: ["ابوبکر","عثمان غنی","علی حیدر","معاذ بن جبل"] }
+    ];
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+
+      document.getElementById("seedBtn").addEventListener("click", async () => {
+        errBox.style.display = "none";
+        log.style.display = "block";
+        log.innerHTML = "شروع ہو رہا ہے...<br>";
+        const btn = document.getElementById("seedBtn");
+        btn.disabled = true;
+
+        try {
+          for (const c of CLASSES) {
+            await setDoc(doc(db, "classes", c.id), {
+              name: c.name, sessions: c.sessions, teacherId: user.uid
+            });
+            log.innerHTML += `درجہ شامل: <b>${c.name}</b><br>`;
+            let roll = 1;
+            for (const name of c.students) {
+              const sid = `${c.id}-${roll}`;
+              await setDoc(doc(db, "students", sid), {
+                name, classId: c.id, roll
+              });
+              roll++;
+            }
+            log.innerHTML += `&nbsp;&nbsp;↳ ${c.students.length} طلبہ شامل<br>`;
+          }
+          log.innerHTML += "<b style='color:var(--green)'>مکمل! اب اس صفحے کو حذف/بند کر دیں۔</b>";
+        } catch (err) {
+          errBox.style.display = "block";
+          errBox.textContent = "خرابی: " + (err.code || err.message) +
+            " — یقینی بنائیں کہ آپ کا صارف admin ہے (users/{uid}.role='admin')۔";
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Render.com Blueprint — one web service + a managed PostgreSQL DB.
+# Deploy: push this repo to GitHub, then in Render choose
+# "New +" -> "Blueprint" and point it at the repo.
+#
+# After the first deploy, open the web service "Shell" tab and run:
+#   npm run setup      # creates the schema and seeds teachers/classes/students
+services:
+  - type: web
+    name: jamia-attendance
+    runtime: node
+    # Choose a paid plan for production; free is suitable only for testing.
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jamia-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PGSSL
+        value: ""          # hosted DB uses SSL (default on)
+      - key: NODE_ENV
+        value: production
+      - key: APP_TIMEZONE
+        value: Asia/Kolkata
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_ADMIN_NAME
+        sync: false
+
+databases:
+  - name: jamia-db
+    # Choose a paid plan for production; free is suitable only for testing.

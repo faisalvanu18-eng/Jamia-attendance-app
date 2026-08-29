@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تعطیلات کا انتظام | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("admin");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html" class="active"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>تعطیلات کا انتظام</h1>
+          <div class="sub">تاریخوں کی مدت اور ایک یا زیادہ درجات کے لیے تعطیل مقرر کریں (درجہ کے حساب سے)</div>
+        </div>
+      </div>
+
+      <div class="note">
+        &#128276; ہر جمعہ ہمیشہ پورے دن کی تعطیل ہوتا ہے — اُس کے لیے یہاں کچھ درج کرنے کی ضرورت نہیں،
+        اور جمعہ کو کبھی کام کا دن نہیں بنایا جا سکتا۔
+      </div>
+
+      <!-- Add / edit holiday form -->
+      <div class="card" style="max-width:860px; margin:0 auto;">
+        <h3 id="formTitle">نئی تعطیل شامل کریں</h3>
+
+        <div class="date-viewer" style="flex-wrap:wrap; gap:12px;">
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:150px;">
+            <label>شروع تاریخ (From)</label>
+            <input class="input" type="date" id="fromDate">
+          </div>
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:150px;">
+            <label>آخری تاریخ (To)</label>
+            <input class="input" type="date" id="toDate">
+          </div>
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:150px;">
+            <label>قسم</label>
+            <select class="input" id="holSession">
+              <option value="full">پورا دن</option>
+              <option value="morning">صرف صبح</option>
+              <option value="afternoon">صرف دوپہر</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:12px;">
+          <label>درجات منتخب کریں (ایک یا زیادہ) — کچھ منتخب نہ کریں تو <b>تمام درجات</b> پر لاگو ہوگا</label>
+          <div id="classChecks" class="class-check-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:6px; max-height:220px; overflow:auto; border:1px solid var(--border,#ddd); border-radius:8px; padding:10px;">
+            <span style="color:var(--muted)">لوڈ ہو رہا ہے...</span>
+          </div>
+          <div style="margin-top:6px;">
+            <button class="btn btn-sm btn-outline" id="selectAllBtn" type="button">سب منتخب کریں</button>
+            <button class="btn btn-sm btn-outline" id="clearSelBtn" type="button">سب ہٹائیں (= تمام درجات)</button>
+          </div>
+        </div>
+
+        <div class="date-viewer" style="flex-wrap:wrap; gap:12px; margin-top:6px;">
+          <div class="form-group" style="margin-bottom:0; flex:2; min-width:220px;">
+            <label>وضاحت (اختیاری)</label>
+            <input class="input" type="text" id="holNote" placeholder="مثلاً: عید کی چھٹی">
+          </div>
+          <button class="btn" id="saveHolBtn" style="align-self:flex-end;">&#10010; محفوظ کریں</button>
+          <button class="btn btn-outline" id="cancelEditBtn" style="align-self:flex-end; display:none;">ترمیم منسوخ</button>
+        </div>
+      </div>
+
+      <!-- Filter + list -->
+      <div class="card" style="margin-top:20px;">
+        <div class="date-viewer" style="flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:150px;">
+            <label>تلاش بلحاظ تاریخ</label>
+            <input class="input" type="date" id="fltDate">
+          </div>
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:170px;">
+            <label>درجہ</label>
+            <select class="input" id="fltClass"><option value="">تمام درجات</option></select>
+          </div>
+          <button class="btn btn-outline" id="clearFltBtn" style="align-self:flex-end;">صاف کریں</button>
+        </div>
+
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:56px">نمبر</th><th style="width:120px">تاریخ</th><th>درجہ</th><th style="width:90px">قسم</th><th class="name-cell">وضاحت</th><th style="width:170px">عمل</th></tr>
+          </thead>
+          <tbody id="holRows"><tr><td colspan="6" style="color:var(--muted)">لوڈ ہو رہا ہے...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAllClasses, getHolidays, addHoliday, editHoliday, removeHoliday } from "./js/data.js";
+
+    const SESSION_LABEL = { morning: "صرف صبح", afternoon: "صرف دوپہر", full: "پورا دن" };
+    let editId = null;
+    let classes = [];
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.className = "toast" + (isError ? " error" : "");
+      t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2600);
+    }
+
+    function selectedClassIds() {
+      return [...document.querySelectorAll("#classChecks input[type=checkbox]:checked")].map(c => c.value);
+    }
+    function setSelectedClasses(ids) {
+      const set = new Set(ids || []);
+      document.querySelectorAll("#classChecks input[type=checkbox]").forEach(c => { c.checked = set.has(c.value); });
+    }
+
+    async function loadList() {
+      const filter = {};
+      const d = document.getElementById("fltDate").value;
+      const c = document.getElementById("fltClass").value;
+      if (d) filter.date = d;
+      if (c) filter.classId = c;
+      const list = await getHolidays(filter);
+      const rows = document.getElementById("holRows");
+      rows.innerHTML = list.length
+        ? list.map((h, i) => `<tr data-id="${h.id}">
+            <td>${i + 1}</td>
+            <td>${h.date}</td>
+            <td>${h.className || "تمام درجات"}</td>
+            <td>${SESSION_LABEL[h.session] || h.session}</td>
+            <td class="name-cell">${h.note || "—"}</td>
+            <td>
+              <button class="btn btn-sm edit-btn" data-id="${h.id}">&#9998; ترمیم</button>
+              <button class="btn btn-sm btn-red del-btn" data-id="${h.id}">&#128465; حذف</button>
+            </td>
+          </tr>`).join("")
+        : '<tr><td colspan="6" style="color:var(--muted)">کوئی تعطیل درج نہیں۔</td></tr>';
+
+      rows.querySelectorAll(".del-btn").forEach(btn => btn.addEventListener("click", async () => {
+        if (!confirm("کیا آپ واقعی یہ تعطیل حذف کرنا چاہتے ہیں؟")) return;
+        try { await removeHoliday(btn.dataset.id); await loadList(); showToast("✓ تعطیل حذف ہو گئی۔"); }
+        catch (err) { showToast("خرابی: " + (err.message || err), true); }
+      }));
+      rows.querySelectorAll(".edit-btn").forEach(btn => btn.addEventListener("click", () => beginEdit(btn.dataset.id, list)));
+    }
+
+    // Editing operates on ONE existing holiday row (single class + single date).
+    function beginEdit(id, list) {
+      const h = list.find(x => x.id === id);
+      if (!h) return;
+      editId = id;
+      document.getElementById("fromDate").value = h.date;
+      document.getElementById("toDate").value = h.date;
+      document.getElementById("toDate").disabled = true;
+      document.getElementById("holSession").value = h.session;
+      document.getElementById("holNote").value = h.note || "";
+      setSelectedClasses(h.classId ? [h.classId] : []);
+      document.getElementById("formTitle").textContent = "تعطیل میں ترمیم (ایک درجہ / ایک دن)";
+      document.getElementById("saveHolBtn").innerHTML = "&#128190; تبدیلی محفوظ کریں";
+      document.getElementById("cancelEditBtn").style.display = "inline-block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function resetForm() {
+      editId = null;
+      document.getElementById("toDate").disabled = false;
+      document.getElementById("holNote").value = "";
+      document.getElementById("holSession").value = "full";
+      setSelectedClasses([]);
+      document.getElementById("formTitle").textContent = "نئی تعطیل شامل کریں";
+      document.getElementById("saveHolBtn").innerHTML = "&#10010; محفوظ کریں";
+      document.getElementById("cancelEditBtn").style.display = "none";
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+
+      classes = await getAllClasses();
+      document.getElementById("classChecks").innerHTML = classes.map(c =>
+        `<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+           <input type="checkbox" value="${c.id}"> <span>${c.name}</span>
+         </label>`).join("");
+      document.getElementById("fltClass").innerHTML =
+        '<option value="">تمام درجات</option>' + classes.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+
+      const today = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+      document.getElementById("fromDate").value = today;
+      document.getElementById("toDate").value = today;
+
+      document.getElementById("selectAllBtn").addEventListener("click", () =>
+        document.querySelectorAll("#classChecks input[type=checkbox]").forEach(c => c.checked = true));
+      document.getElementById("clearSelBtn").addEventListener("click", () =>
+        document.querySelectorAll("#classChecks input[type=checkbox]").forEach(c => c.checked = false));
+
+      document.getElementById("saveHolBtn").addEventListener("click", async () => {
+        const fromDate = document.getElementById("fromDate").value;
+        const toDate = document.getElementById("toDate").value || fromDate;
+        const session = document.getElementById("holSession").value;
+        const note = document.getElementById("holNote").value.trim() || null;
+        const classIds = selectedClassIds();
+        if (!fromDate) return showToast("براہِ کرم شروع تاریخ منتخب کریں۔", true);
+        if (!editId && toDate < fromDate) return showToast("آخری تاریخ شروع تاریخ سے پہلے نہیں ہو سکتی۔", true);
+        const btn = document.getElementById("saveHolBtn");
+        btn.disabled = true;
+        try {
+          if (editId) {
+            await editHoliday(editId, {
+              date: fromDate, session, note,
+              classId: classIds.length ? classIds[0] : null
+            });
+            showToast("✓ تعطیل میں تبدیلی محفوظ ہو گئی۔");
+          } else {
+            const r = await addHoliday({ classIds, fromDate, toDate, session, note });
+            showToast(`✓ ${r.created} تعطیل کے ریکارڈ شامل ہو گئے۔`);
+          }
+          resetForm();
+          await loadList();
+        } catch (err) { showToast("خرابی: " + (err.message || err), true); }
+        btn.disabled = false;
+      });
+
+      document.getElementById("cancelEditBtn").addEventListener("click", resetForm);
+
+      ["fltDate", "fltClass"].forEach(id =>
+        document.getElementById(id).addEventListener("input", loadList));
+      document.getElementById("clearFltBtn").addEventListener("click", () => {
+        document.getElementById("fltDate").value = "";
+        document.getElementById("fltClass").value = "";
+        loadList();
+      });
+
+      await loadList();
+    })();
+  </script>
+</body>
+</html>

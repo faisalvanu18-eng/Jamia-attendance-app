@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تمام ڈیٹا ری سیٹ کریں | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("admin");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html" class="active"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>تمام ڈیٹا ری سیٹ کریں</h1>
+          <div class="sub">پورا نظام ابتدائی حالت میں واپس لے جائیں</div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:600px; margin:0 auto; border:2px solid #dc2626;">
+        <h3 style="color:#dc2626;">&#9888; خطرہ — یہ عمل واپس نہیں ہو سکتا</h3>
+        <p style="color:var(--muted); font-size:14px; line-height:1.9;">
+          ری سیٹ کرنے پر درج ذیل <b>تمام ڈیٹا مستقل طور پر حذف</b> ہو جائے گا اور
+          نظام دوبارہ ابتدائی (default) حالت میں آ جائے گا:
+        </p>
+        <ul style="color:var(--muted); font-size:14px; line-height:2; padding-inline-start:22px;">
+          <li>تمام حاضری کا ریکارڈ (ساری تاریخوں کا)</li>
+          <li>تمام طلبہ کا ڈیٹا (نئے شامل کیے گئے طلبہ سمیت)</li>
+          <li>تمام اکاؤنٹس اور تبدیل کیے گئے پاس ورڈ</li>
+        </ul>
+        <p style="color:var(--muted); font-size:14px; line-height:1.9;">
+          ری سیٹ کے بعد صرف <b>ابتدائی اساتذہ، درجات اور نمونہ طلبہ</b> باقی رہیں گے،
+          اور مہتمم کا پاس ورڈ دوبارہ seed configuration میں مقرر کردہ پاس ورڈ ہو جائے گا۔
+        </p>
+
+        <hr style="border:none; border-top:1px solid var(--line); margin:16px 0;">
+
+        <p style="font-size:14px; margin-bottom:14px;">
+          تصدیق کے لیے اپنا پاس ورڈ <b>دو مرتبہ</b> درج کریں:
+        </p>
+
+        <form id="resetForm">
+          <div class="form-group">
+            <label>مہتمم کا پاس ورڈ</label>
+            <input type="password" class="input" id="pass1" placeholder="اپنا پاس ورڈ لکھیں" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>پاس ورڈ دوبارہ درج کریں</label>
+            <input type="password" class="input" id="pass2" placeholder="دوبارہ وہی پاس ورڈ لکھیں" required autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-red btn-block btn-lg" id="resetBtn">&#9888; تمام ڈیٹا ری سیٹ کریں</button>
+        </form>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </main>
+  </div>
+
+  <!-- Final confirmation modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <h3 style="color:#dc2626;">&#9888; آخری تصدیق</h3>
+      <div class="hint">کیا آپ واقعی پورا ڈیٹا مستقل طور پر حذف کر کے نظام ری سیٹ کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہو سکتا۔</div>
+      <div class="actions">
+        <button class="btn btn-red" id="finalConfirmBtn">&#128465; ہاں، سب کچھ ری سیٹ کریں</button>
+        <button class="btn btn-outline" id="cancelConfirmBtn">منسوخ کریں</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout, logout } from "./js/auth.js";
+    import { resetAllData } from "./js/data.js";
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = "toast" + (isError ? " error" : "");
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 3500);
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+
+      const form = document.getElementById("resetForm");
+      const modal = document.getElementById("confirmModal");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const p1 = document.getElementById("pass1").value;
+        const p2 = document.getElementById("pass2").value;
+        if (!p1 || !p2) { showToast("دونوں خانوں میں پاس ورڈ درج کریں۔", true); return; }
+        if (p1 !== p2) { showToast("دونوں پاس ورڈ ایک جیسے نہیں ہیں۔", true); return; }
+        // Open the final confirmation modal.
+        modal.classList.add("show");
+      });
+
+      document.getElementById("cancelConfirmBtn").addEventListener("click", () => {
+        modal.classList.remove("show");
+      });
+
+      document.getElementById("finalConfirmBtn").addEventListener("click", async () => {
+        const p1 = document.getElementById("pass1").value;
+        const p2 = document.getElementById("pass2").value;
+        const btn = document.getElementById("finalConfirmBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> ری سیٹ ہو رہا ہے';
+
+        try {
+          await resetAllData(p1, p2);
+          modal.classList.remove("show");
+          showToast("✓ تمام ڈیٹا کامیابی سے ری سیٹ ہو گیا۔ آپ کو دوبارہ لاگ اِن کرنا ہوگا۔");
+          // The admin account/password was reset — force re-login.
+          setTimeout(() => logout(), 2500);
+        } catch (err) {
+          modal.classList.remove("show");
+          btn.disabled = false;
+          btn.innerHTML = "&#128465; ہاں، سب کچھ ری سیٹ کریں";
+          if (err.code === "wrong_password") {
+            showToast("پاس ورڈ غلط ہے۔ ری سیٹ منسوخ کر دیا گیا۔", true);
+          } else if (err.code === "password_mismatch") {
+            showToast("دونوں پاس ورڈ ایک جیسے نہیں ہیں۔", true);
+          } else {
+            showToast("خرابی: " + (err.message || err), true);
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

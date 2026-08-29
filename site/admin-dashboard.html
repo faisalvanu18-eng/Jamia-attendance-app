@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مہتمم صاحب کا ڈیش بورڈ | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("admin");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html" class="active"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles"><h1>مہتمم صاحب کا ڈیش بورڈ</h1></div>
+        <div class="welcome-box">
+          <div class="hi">خوش آمدید!</div>
+          <div class="name" id="adminName">...</div>
+          <a href="#" id="logoutBtn2" class="btn btn-red btn-sm">لاگ آؤٹ</a>
+        </div>
+      </div>
+
+      <h3 class="section-title">آج کی حاضری — <span id="todayDate"></span></h3>
+
+      <!-- Morning / Afternoon session summaries -->
+      <div class="stats-row" style="grid-template-columns:1fr 1fr;">
+        <div class="stat">
+          <div class="lbl" style="font-size:16px;color:var(--gold-active);font-weight:600;">&#9728; صبح</div>
+          <div style="display:flex;justify-content:space-around;margin-top:8px;">
+            <div><div class="lbl">کل</div><div class="num" id="mTotal" style="font-size:24px;">—</div></div>
+            <div><div class="lbl">حاضر</div><div class="num green" id="mPresent" style="font-size:24px;">—</div></div>
+            <div><div class="lbl">غیر حاضر</div><div class="num red" id="mAbsent" style="font-size:24px;">—</div></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="lbl" style="font-size:16px;color:var(--gold-active);font-weight:600;">&#127774; دوپہر</div>
+          <div style="display:flex;justify-content:space-around;margin-top:8px;">
+            <div><div class="lbl">کل</div><div class="num" id="aTotal" style="font-size:24px;">—</div></div>
+            <div><div class="lbl">حاضر</div><div class="num green" id="aPresent" style="font-size:24px;">—</div></div>
+            <div><div class="lbl">غیر حاضر</div><div class="num red" id="aAbsent" style="font-size:24px;">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Absent students today -->
+      <div class="card">
+        <h3>&#128308; آج کے غیر حاضر طلبہ</h3>
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:56px">نمبر</th><th class="name-cell">طالب علم</th><th>درجہ / گروپ</th><th style="width:90px">وقت</th><th style="width:110px">وجہ</th></tr>
+          </thead>
+          <tbody id="absentRows"><tr><td colspan="5" style="color:var(--muted)">لوڈ ہو رہا ہے...</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Pending attendance -->
+      <div class="card">
+        <h3>&#9888; باقی ماندہ حاضری (نگرانی)</h3>
+        <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px;">
+          یہ صرف اُن ذمہ داریوں کو دکھاتا ہے جن کی مقررہ نگرانی وقت (صبح 8:30 / دوپہر 3:30) گزر چکا ہے اور حاضری ابھی درج نہیں ہوئی۔
+        </p>
+        <div id="pendingBox"><p style="text-align:center;color:var(--muted)">لوڈ ہو رہا ہے...</p></div>
+      </div>
+
+      <!-- Date filter -->
+      <div class="card">
+        <h3>کسی بھی تاریخ کی حاضری دیکھیں</h3>
+        <div class="date-viewer">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>تاریخ منتخب کریں</label>
+            <input class="input" type="date" id="viewDate">
+          </div>
+          <a href="#" id="viewDateBtn" class="btn">حاضری دیکھیں</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="links-title">فوری لنکس</div>
+        <div class="links-grid">
+          <a href="manage-students.html" class="link-card"><span class="lic">&#128101;</span> طلبہ کا انتظام</a>
+          <a href="manage-holidays.html" class="link-card"><span class="lic">&#127796;</span> تعطیلات کا انتظام</a>
+          <a href="student-search.html" class="link-card"><span class="lic">&#128269;</span> طالب علم تلاش</a>
+          <a href="reports.html" class="link-card"><span class="lic">&#128202;</span> ماہانہ رپورٹ</a>
+          <a href="attendance-detail.html" class="link-card"><span class="lic">&#128197;</span> کسی تاریخ کی حاضری</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAttendanceByDate, getAbsentByDate, getPending, SESSIONS, REASONS } from "./js/data.js";
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+      document.getElementById("adminName").textContent = user.name || user.email;
+
+      const today = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
+      document.getElementById("todayDate").textContent = today;
+      document.getElementById("viewDate").value = today;
+      document.getElementById("viewDateBtn").href = "attendance-detail.html?date=" + today;
+      document.getElementById("viewDate").addEventListener("change", e =>
+        document.getElementById("viewDateBtn").href = "attendance-detail.html?date=" + e.target.value);
+
+      // Session totals
+      const docs = await getAttendanceByDate(today);
+      const acc = { morning: { t: 0, p: 0, a: 0 }, afternoon: { t: 0, p: 0, a: 0 } };
+      docs.forEach(d => {
+        const k = acc[d.session]; if (!k || !d.summary) return;
+        k.t += d.summary.total; k.p += d.summary.present; k.a += d.summary.absent;
+      });
+      mTotal.textContent = acc.morning.t; mPresent.textContent = acc.morning.p; mAbsent.textContent = acc.morning.a;
+      aTotal.textContent = acc.afternoon.t; aPresent.textContent = acc.afternoon.p; aAbsent.textContent = acc.afternoon.a;
+
+      // Absent students today
+      const absent = await getAbsentByDate(today);
+      const aRows = document.getElementById("absentRows");
+      aRows.innerHTML = absent.length
+        ? absent.map((r, i) => `<tr>
+            <td>${i + 1}</td>
+            <td class="name-cell">${r.name}</td>
+            <td>${r.className}</td>
+            <td>${SESSIONS[r.session]}</td>
+            <td class="${r.reason === 'leave' ? 'status-leave' : 'status-absent'}">${REASONS[r.reason] || 'دیگر'}</td>
+          </tr>`).join("")
+        : '<tr><td colspan="5" style="color:var(--green)">آج تک کوئی غیر حاضری درج نہیں۔</td></tr>';
+
+      // Pending (past-deadline only)
+      const pending = await getPending(today, true);
+      const pBox = document.getElementById("pendingBox");
+      if (!pending.length) {
+        pBox.innerHTML = '<p style="text-align:center;color:var(--green)">تمام واجب حاضریاں مکمل ہیں۔</p>';
+      } else {
+        const group = (s) => pending.filter(p => p.session === s);
+        const render = (label, icon, arr) => arr.length ? `
+          <p style="color:var(--gold-active);font-weight:600;margin:8px 0 4px;">${icon} ${label}</p>
+          <table class="tbl"><tbody>
+            ${arr.map(p => `<tr><td class="name-cell">${p.className}</td><td>${p.teacherName}</td>
+              <td class="status-absent">درج نہیں</td></tr>`).join("")}
+          </tbody></table>` : "";
+        pBox.innerHTML = render("صبح", "&#9728;", group("morning")) + render("دوپہر", "&#127774;", group("afternoon"));
+      }
+    })();
+  </script>
+</body>
+</html>

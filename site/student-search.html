@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طالب علم تلاش کریں | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html" class="active"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar"><div class="titles"><h1>طالب علم تلاش کریں</h1></div></div>
+
+      <div class="card" style="max-width:560px;margin:0 auto;">
+        <div class="input-icon">
+          <span class="ic">&#128269;</span>
+          <input class="input" type="text" id="q" placeholder="طالب علم کا نام لکھیں...">
+        </div>
+      </div>
+
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th style="width:56px">نمبر</th><th class="name-cell">طالب علم</th><th>درجہ / گروپ</th><th style="width:130px">ریکارڈ</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="4" style="color:var(--muted)">لوڈ ہو رہا ہے...</td></tr></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { searchStudents } from "./js/data.js";
+
+    let all = [];
+    function draw(list) {
+      document.getElementById("rows").innerHTML = list.length
+        ? list.map((s, i) => `<tr>
+            <td>${i + 1}</td>
+            <td class="name-cell">${s.name}</td>
+            <td>${s.className}</td>
+            <td><a class="btn btn-sm" href="student-record.html?id=${encodeURIComponent(s.id)}">دیکھیں</a></td>
+          </tr>`).join("")
+        : '<tr><td colspan="4" style="color:var(--muted)">کوئی طالب علم نہیں ملا۔</td></tr>';
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+      all = await searchStudents("");
+      draw(all);
+      document.getElementById("q").addEventListener("input", e => {
+        const q = e.target.value.trim();
+        draw(q ? all.filter(s => s.name.includes(q)) : all);
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طلبہ کا انتظام | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("admin");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html" class="active"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>طلبہ کا انتظام</h1>
+          <div class="sub">درجہ → بیچ → طلبہ — شامل کریں، تبدیل کریں یا نکالیں</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="max-width:820px; margin:0 auto;">
+        <div class="date-viewer" style="flex-wrap:wrap; gap:12px;">
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:200px;">
+            <label>درجہ / گروپ</label>
+            <select class="input" id="classSelect"><option value="">لوڈ ہو رہا ہے...</option></select>
+          </div>
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:160px;">
+            <label>بیچ</label>
+            <select class="input" id="batchSelect"><option value="">تمام بیچ</option></select>
+          </div>
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:180px;">
+            <label>تلاش (نام)</label>
+            <input class="input" type="text" id="searchBox" placeholder="نام لکھیں...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Add / edit form -->
+      <div class="card student-mgmt" id="mgmtCard" style="max-width:820px; margin:20px auto 0; display:none;">
+        <h3 id="classTitle">طلبہ کی فہرست</h3>
+
+        <div class="add-form" style="flex-wrap:wrap; gap:10px;">
+          <input type="text" class="input" id="newStudentName" placeholder="طالب علم کا نام..." style="flex:2; min-width:180px;">
+          <input type="text" class="input" id="newStudentBatch" placeholder="بیچ (اختیاری)" style="flex:1; min-width:120px;">
+          <button class="btn" id="addStudentBtn">&#10010; شامل کریں</button>
+        </div>
+
+        <div id="studentCount" style="text-align:center; margin:12px 0; color:var(--muted); font-size:14px;"></div>
+
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:56px">نمبر</th><th class="name-cell">نام</th><th style="width:120px">بیچ</th><th style="width:180px">عمل</th></tr>
+          </thead>
+          <tbody id="studentRows">
+            <tr><td colspan="4" style="color:var(--muted)">درجہ منتخب کریں۔</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Edit modal -->
+      <div class="modal-overlay" id="editModal">
+        <div class="modal">
+          <h3>طالب علم میں ترمیم</h3>
+          <div class="form-group">
+            <label>نام</label>
+            <input class="input" type="text" id="editName">
+          </div>
+          <div class="form-group">
+            <label>درجہ / گروپ</label>
+            <select class="input" id="editClass"></select>
+          </div>
+          <div class="form-group">
+            <label>بیچ (اختیاری)</label>
+            <input class="input" type="text" id="editBatch">
+          </div>
+          <div class="actions">
+            <button class="btn" id="saveEditBtn">&#128190; محفوظ کریں</button>
+            <button class="btn btn-outline" id="cancelEditBtn">منسوخ کریں</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm remove modal -->
+      <div class="modal-overlay" id="removeModal">
+        <div class="modal">
+          <h3>&#9888; کیا آپ واقعی اس طالب علم کو نکالنا چاہتے ہیں؟</h3>
+          <div class="stu-name" id="removeStudentName">—</div>
+          <div class="hint">یہ عمل واپس نہیں ہو سکتا۔ طالب علم کا تمام ریکارڈ بھی حذف ہو جائے گا۔</div>
+          <div class="actions">
+            <button class="btn btn-red" id="confirmRemoveBtn">&#128465; ہاں، نکالیں</button>
+            <button class="btn btn-outline" id="cancelRemoveBtn">منسوخ کریں</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { getAllClasses, getClass, getStudentsByClass, getBatches,
+             addStudent, editStudent, removeStudent } from "./js/data.js";
+
+    let currentClassId = null;
+    let allStudents = [];          // students of the current class (unfiltered)
+    let removeTargetId = null;
+    let editTargetId = null;
+    let classes = [];
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = "toast" + (isError ? " error" : "");
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    function applyFilters() {
+      const batch = document.getElementById("batchSelect").value;
+      const q = document.getElementById("searchBox").value.trim();
+      let list = allStudents.slice();
+      if (batch) list = list.filter(s => (s.batch || "") === batch);
+      if (q) list = list.filter(s => (s.name || "").includes(q));
+      drawRows(list);
+    }
+
+    function drawRows(list) {
+      const rows = document.getElementById("studentRows");
+      document.getElementById("studentCount").textContent = `کل طلبہ: ${list.length}`;
+      if (!list.length) {
+        rows.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">کوئی طالب علم نہیں ملا۔</td></tr>';
+        return;
+      }
+      rows.innerHTML = list.map((s, i) => `
+        <tr data-id="${s.id}">
+          <td>${i + 1}</td>
+          <td class="name-cell">${s.name}</td>
+          <td>${s.batch || "—"}</td>
+          <td>
+            <button class="btn btn-sm edit-btn" data-id="${s.id}">&#9998; ترمیم</button>
+            <button class="btn btn-sm btn-red remove-btn" data-id="${s.id}" data-name="${s.name}">&#128465; نکالیں</button>
+          </td>
+        </tr>`).join("");
+
+      rows.querySelectorAll(".remove-btn").forEach(btn => btn.addEventListener("click", () => {
+        removeTargetId = btn.dataset.id;
+        document.getElementById("removeStudentName").textContent = btn.dataset.name;
+        document.getElementById("removeModal").classList.add("show");
+      }));
+      rows.querySelectorAll(".edit-btn").forEach(btn => btn.addEventListener("click", () => openEdit(btn.dataset.id)));
+    }
+
+    async function refreshBatchFilter() {
+      const sel = document.getElementById("batchSelect");
+      const batches = currentClassId ? await getBatches(currentClassId) : [];
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">تمام بیچ</option>' +
+        batches.map(b => `<option value="${b}">${b}</option>`).join("");
+      if (batches.includes(cur)) sel.value = cur;
+    }
+
+    async function loadStudents(classId) {
+      currentClassId = classId;
+      allStudents = await getStudentsByClass(classId);
+      await refreshBatchFilter();
+      applyFilters();
+    }
+
+    function openEdit(id) {
+      const s = allStudents.find(x => x.id === id);
+      if (!s) return;
+      editTargetId = id;
+      document.getElementById("editName").value = s.name || "";
+      document.getElementById("editBatch").value = s.batch || "";
+      const cls = document.getElementById("editClass");
+      cls.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+      cls.value = s.classId;
+      document.getElementById("editModal").classList.add("show");
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+
+      classes = await getAllClasses();
+      const classSelect = document.getElementById("classSelect");
+      classSelect.innerHTML = '<option value="">— درجہ منتخب کریں —</option>' +
+        classes.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+
+      const mgmtCard = document.getElementById("mgmtCard");
+
+      classSelect.addEventListener("change", async () => {
+        const classId = classSelect.value;
+        if (!classId) { mgmtCard.style.display = "none"; return; }
+        mgmtCard.style.display = "block";
+        const cls = await getClass(classId);
+        document.getElementById("classTitle").textContent = (cls ? cls.name : classId) + " — طلبہ";
+        document.getElementById("searchBox").value = "";
+        await loadStudents(classId);
+      });
+
+      document.getElementById("batchSelect").addEventListener("change", applyFilters);
+      document.getElementById("searchBox").addEventListener("input", applyFilters);
+
+      // Add student
+      document.getElementById("addStudentBtn").addEventListener("click", async () => {
+        const nameInput = document.getElementById("newStudentName");
+        const batchInput = document.getElementById("newStudentBatch");
+        const name = nameInput.value.trim();
+        const batch = batchInput.value.trim();
+        if (!name) return showToast("براہِ کرم طالب علم کا نام لکھیں۔", true);
+        if (!currentClassId) return showToast("پہلے درجہ منتخب کریں۔", true);
+        const btn = document.getElementById("addStudentBtn");
+        btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>';
+        try {
+          await addStudent(currentClassId, name, batch || null);
+          nameInput.value = ""; batchInput.value = "";
+          await loadStudents(currentClassId);
+          showToast("✓ طالب علم کامیابی سے شامل ہو گیا۔");
+        } catch (err) { showToast("خرابی: " + (err.message || err), true); }
+        btn.disabled = false; btn.innerHTML = "&#10010; شامل کریں";
+      });
+      document.getElementById("newStudentName").addEventListener("keypress", e => {
+        if (e.key === "Enter") { e.preventDefault(); document.getElementById("addStudentBtn").click(); }
+      });
+
+      // Edit save
+      document.getElementById("saveEditBtn").addEventListener("click", async () => {
+        if (!editTargetId) return;
+        const name = document.getElementById("editName").value.trim();
+        const classId = document.getElementById("editClass").value;
+        const batch = document.getElementById("editBatch").value.trim();
+        if (!name) return showToast("نام خالی نہیں ہو سکتا۔", true);
+        const btn = document.getElementById("saveEditBtn");
+        btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>';
+        try {
+          await editStudent(editTargetId, { name, classId, batch: batch || null });
+          document.getElementById("editModal").classList.remove("show");
+          await loadStudents(currentClassId);
+          showToast("✓ تبدیلی محفوظ ہو گئی۔");
+        } catch (err) { showToast("خرابی: " + (err.message || err), true); }
+        btn.disabled = false; btn.innerHTML = "&#128190; محفوظ کریں";
+        editTargetId = null;
+      });
+      document.getElementById("cancelEditBtn").addEventListener("click", () => {
+        document.getElementById("editModal").classList.remove("show"); editTargetId = null;
+      });
+
+      // Remove
+      document.getElementById("confirmRemoveBtn").addEventListener("click", async () => {
+        if (!removeTargetId) return;
+        const btn = document.getElementById("confirmRemoveBtn");
+        btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>';
+        try {
+          await removeStudent(removeTargetId);
+          document.getElementById("removeModal").classList.remove("show");
+          await loadStudents(currentClassId);
+          showToast("✓ طالب علم نکال دیا گیا۔");
+        } catch (err) { showToast("خرابی: " + (err.message || err), true); }
+        btn.disabled = false; btn.innerHTML = "&#128465; ہاں، نکالیں";
+        removeTargetId = null;
+      });
+      document.getElementById("cancelRemoveBtn").addEventListener("click", () => {
+        document.getElementById("removeModal").classList.remove("show"); removeTargetId = null;
+      });
+    })();
+  </script>
+</body>
+</html>

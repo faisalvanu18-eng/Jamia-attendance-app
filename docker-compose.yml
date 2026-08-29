@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jamia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - jamia_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jamia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/jamia
+      PGSSL: disable
+      PORT: 5050
+      NODE_ENV: production
+      APP_TIMEZONE: Asia/Kolkata
+      JWT_SECRET: local-docker-change-this-secret-to-32-chars-minimum
+      SEED_ADMIN_EMAIL: admin@jamia.test
+      SEED_ADMIN_PASSWORD: change-this-password
+      SEED_ADMIN_NAME: حضرت مولانا اسحاق گھارے صاحب
+    ports:
+      - "5050:5050"
+    command: ["sh", "-c", "node db/migrate.js && node db/seed.js && node server.js"]
+
+volumes:
+  jamia_pgdata:

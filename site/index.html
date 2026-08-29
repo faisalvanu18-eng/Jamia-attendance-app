@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لاگ اِن | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <style>
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(900px 500px at 85% 10%, rgba(216,173,51,0.18), transparent 60%),
+        radial-gradient(800px 500px at 10% 90%, rgba(18,128,90,0.22), transparent 60%),
+        linear-gradient(160deg, #0a4a33 0%, #08301f 100%);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-page::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -30%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      animation: float 12s ease-in-out infinite;
+    }
+    .login-page::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      right: -20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(201,162,39,0.05) 0%, transparent 70%);
+      animation: float 10s ease-in-out infinite reverse;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(20px, -20px); }
+    }
+    .login-container {
+      width: 100%;
+      max-width: 460px;
+      position: relative;
+      z-index: 1;
+      animation: scaleIn 0.5s ease;
+    }
+    .login-card {
+      background: rgba(255,255,255,0.98);
+      border-radius: 26px;
+      padding: 44px 40px 36px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0,0,0,.1);
+      border: 1px solid rgba(255,255,255,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 5px;
+      background: linear-gradient(90deg, var(--green), var(--gold-active), var(--green));
+    }
+    .login-card .logo-section {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-card .logo-section img {
+      width: 90px;
+      height: 90px;
+      border-radius: 20px;
+      padding: 8px;
+      background: linear-gradient(135deg, #f8f4eb, #e8f5e9);
+      box-shadow: 0 4px 16px rgba(13, 59, 38, 0.08);
+      transition: transform 0.3s ease;
+    }
+    .login-card .logo-section img:hover { transform: scale(1.05) rotate(-2deg); }
+    .login-card .logo-section h1 {
+      font-family: 'Jameel Noori Nastaleeq Regular', 'Noto Nastaliq Urdu', serif;
+      color: var(--green-deep);
+      font-size: 26px;
+      margin-top: 14px;
+      line-height: 2.4;
+    }
+    .login-card .logo-section .tagline {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+    .login-card .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cream-line), transparent);
+      margin: 0 0 24px;
+    }
+    .login-card .form-title {
+      font-family: 'Jameel Noori Nastaleeq Regular', 'Noto Nastaliq Urdu', serif;
+      color: var(--green-deep);
+      font-size: 20px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .login-card .field {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .login-card .field .field-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 18px;
+      transition: color 0.3s ease;
+      pointer-events: none;
+    }
+    .login-card .field input {
+      width: 100%;
+      padding: 16px 48px 16px 16px;
+      border: 2px solid #e8e3d8;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      background: #fdfcfa;
+      color: var(--text);
+      transition: all 0.3s ease;
+      outline: none;
+    }
+    .login-card .field input:focus {
+      border-color: var(--green);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.08);
+    }
+    .login-card .field input:focus + .field-icon {
+      color: var(--green);
+    }
+    .pass-toggle {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.3s ease;
+    }
+    .pass-toggle:hover { color: var(--green); }
+    .login-card .options-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .login-card .options-row label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .login-card .options-row label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--green);
+    }
+    .login-card .options-row .forgot-link {
+      color: var(--green);
+      font-size: 13px;
+    }
+    .login-card .options-row .forgot-link:hover { text-decoration: underline; }
+    .login-card .login-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-family: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--green-btn), var(--green-dark));
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(21, 115, 71, 0.25);
+    }
+    .login-card .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(21, 115, 71, 0.35);
+    }
+    .login-card .login-btn:active { transform: translateY(0); }
+    .login-card .login-btn:disabled { opacity: 0.7; cursor: wait; transform: none; }
+    .login-card .login-btn .btn-loader {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .login-card .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-bottom: 18px;
+      display: none;
+      animation: fadeInUp 0.3s ease;
+    }
+    .login-card .error-msg.show { display: block; }
+    .login-card .demo-box {
+      background: linear-gradient(135deg, #f0fdf4, #fefce8);
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .login-card .demo-box .demo-title {
+      font-weight: 600;
+      color: var(--green-deep);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .login-card .demo-box .demo-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .login-card .demo-box .demo-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--green);
+      background: #fff;
+      color: var(--green-deep);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .login-card .demo-box .demo-btn:hover { background: var(--green); color: #fff; }
+    .login-card .demo-box .demo-info {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.8;
+    }
+    .login-footer-info { text-align: center; margin-top: 20px; }
+    .login-footer-info .address { color: var(--muted); font-size: 12px; line-height: 2; }
+    .login-footer-info .trust { color: var(--red); font-size: 11px; margin-top: 4px; }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    @media (max-width: 520px) {
+      .login-card { padding: 32px 24px 28px; border-radius: 20px; }
+      .login-card .logo-section img { width: 72px; height: 72px; }
+      .login-card .logo-section h1 { font-size: 22px; }
+      .login-card .field input { padding: 14px 44px 14px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="logo-section">
+          <img src="assets/logo.png" alt="Jamia Logo">
+          <h1>جامعہ اسلامیہ کوکن</h1>
+          <div class="tagline">طلبہ کی حاضری کا نظام</div>
+          <div class="tagline">احسانے،کانبلہ</div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="form-title">لاگ اِن کریں</div>
+
+        <div id="demoBox"></div>
+        <div class="error-msg" id="loginError"></div>
+
+        <form id="loginForm">
+          <div class="field">
+            <input id="email" type="email" placeholder="ای میل ایڈریس" required>
+            <span class="field-icon">&#128100;</span>
+          </div>
+          <div class="field">
+            <input id="password" type="password" placeholder="پاس ورڈ" required>
+            <span class="field-icon">&#128274;</span>
+            <button type="button" class="pass-toggle" id="passToggle">&#128065;</button>
+          </div>
+          <div class="options-row">
+            <label><input id="remember" type="checkbox" checked> مجھے یاد رکھیں</label>
+            <span class="forgot-link" aria-hidden="true">پاس ورڈ بھول گئے؟</span>
+          </div>
+          <button id="loginBtn" class="login-btn" type="submit">
+            <span id="btnText">لاگ اِن کریں</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="login-footer-info">
+        <div class="address">مقام پوسٹ: اسنے کمبلے، تعلقہ: مہاڈ، ضلع: رائے گڑھ – 402309</div>
+        <div class="trust">زیرِ اہتمام: انجمن دردمندانِ تعلیم و ترقی ٹرسٹ، مہاڈ</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== DEMO DB INITIALIZATION =====
+    var DB_KEY = "jamia_demo_db_v2";
+    var SESSION_KEY = "jamia_demo_session";
+
+    // If no demo DB exists yet, we need the seed. Load it via module (if possible)
+    // or it will be created when first needed.
+    function ensureDB() {
+      var raw = localStorage.getItem(DB_KEY);
+      if (raw) return JSON.parse(raw);
+      return null;
+    }
+
+    // If already logged in, redirect to the right dashboard.
+    //
+    // IMPORTANT (reload-loop fix): in API_MODE we must NOT blindly trust a
+    // token sitting in localStorage. A stale/expired token (or a backend that
+    // is temporarily unreachable) would otherwise cause an infinite bounce:
+    //   index -> dashboard -> /api/me fails -> back to index -> repeat.
+    // So in API_MODE we verify the session against the server first, and only
+    // redirect on a confirmed-valid session. On any failure we clear the stale
+    // token and stay on the login page.
+    var existingUser = JamiaAuth.getCurrentUser();
+    if (existingUser) {
+      var isApiMode = window.JAMIA_CONFIG && window.JAMIA_CONFIG.API_MODE;
+      if (isApiMode) {
+        var apiToken = localStorage.getItem("jamia_api_token");
+        if (apiToken) {
+          fetch("/api/me", { headers: { Authorization: "Bearer " + apiToken } })
+            .then(function (res) {
+              if (res.ok) return res.json();
+              // 401/other -> token is stale; drop it and stay on login.
+              localStorage.removeItem("jamia_api_token");
+              localStorage.removeItem("jamia_api_user");
+              return null;
+            })
+            .then(function (me) {
+              if (me && me.role) {
+                window.location.replace(me.role === "admin" ? "admin-dashboard.html" : "dashboard.html");
+              }
+              // else: stay on the login page (do NOT redirect => no loop).
+            })
+            .catch(function () {
+              // Backend unreachable: do NOT redirect. Staying here avoids the
+              // index <-> dashboard reload loop while the server is down.
+            });
+        }
+        // No API token -> this is a leftover demo session; ignore it in API mode.
+      } else {
+        // Demo mode: the localStorage session is authoritative.
+        window.location.replace(existingUser.role === "admin" ? "admin-dashboard.html" : "dashboard.html");
+      }
+    }
+
+    // Password toggle
+    document.getElementById("passToggle").addEventListener("click", function() {
+      var p = document.getElementById("password");
+      p.type = p.type === "password" ? "text" : "password";
+    });
+
+    // Quick-login helper box (shown only in offline DEMO mode).
+    var demoBox = document.getElementById("demoBox");
+    if (window.JAMIA_CONFIG && window.JAMIA_CONFIG.API_MODE) {
+      demoBox.innerHTML = "";
+    } else {
+      demoBox.innerHTML = '<div class="demo-box">' +
+        '<div class="demo-title">&#127793; ڈیمو موڈ — فوری لاگ اِن</div>' +
+        '<div class="demo-btns">' +
+        '<button type="button" class="demo-btn" id="fillAdmin">&#128188; مہتمم صاحب</button>' +
+        '<button type="button" class="demo-btn" id="fillTeacher">&#128218; استاذ (مفتی صابر)</button>' +
+        '</div>' +
+        '<div class="demo-info">مہتمم: admin@jamia.test / admin123<br>استاذ: sabir@jamia.test / jamia123</div>' +
+        '</div>';
+
+      document.getElementById("fillAdmin").onclick = function() {
+        document.getElementById("email").value = "admin@jamia.test";
+        document.getElementById("password").value = "admin123";
+      };
+      document.getElementById("fillTeacher").onclick = function() {
+        document.getElementById("email").value = "sabir@jamia.test";
+        document.getElementById("password").value = "jamia123";
+      };
+    }
+
+    // Login form submission
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      // In API_MODE the login is handled by the module script below.
+      if (window.JAMIA_CONFIG && window.JAMIA_CONFIG.API_MODE) return;
+      var errBox = document.getElementById("loginError");
+      var btn = document.getElementById("loginBtn");
+      var btnText = document.getElementById("btnText");
+      errBox.classList.remove("show");
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="btn-loader"></span> لاگ اِن ہو رہا ہے';
+
+      var email = document.getElementById("email").value.trim().toLowerCase();
+      var password = document.getElementById("password").value;
+
+      // Small delay for visual feedback
+      setTimeout(function() {
+        var db = ensureDB();
+        if (!db) {
+          // DB not initialized yet — try to init via module import
+          errBox.classList.add("show");
+          errBox.innerHTML = "&#9888; ڈیٹا بیس ابھی تیار نہیں ہوا۔ صفحہ ریفریش کریں۔";
+          btn.disabled = false;
+          btnText.textContent = "لاگ اِن کریں";
+          return;
+        }
+
+        var acct = db.accounts[email];
+        if (!acct || acct.password !== password) {
+          errBox.classList.add("show");
+          errBox.innerHTML = "&#9888; ای میل یا پاس ورڈ غلط ہے۔";
+          btn.disabled = false;
+          btnText.textContent = "لاگ اِن کریں";
+          btn.style.animation = "shake 0.4s ease";
+          setTimeout(function() { btn.style.animation = ""; }, 400);
+          return;
+        }
+
+        // Login successful!
+        localStorage.setItem(SESSION_KEY, acct.uid);
+        btnText.textContent = "✓ کامیاب!";
+        btn.style.background = "linear-gradient(135deg, #059669, #047857)";
+
+        var user = db.users[acct.uid];
+        var dest = (user && user.role === "admin") ? "admin-dashboard.html" : "dashboard.html";
+        
+        setTimeout(function() {
+          window.location.replace(dest);
+        }, 300);
+      }, 400);
+    });
+  </script>
+
+  <!-- Backend wiring: API_MODE (PostgreSQL) or demo seeding -->
+  <script type="module">
+    import { DEMO_MODE, API_MODE } from "./js/firebase-config.js";
+
+    if (API_MODE) {
+      // Online PostgreSQL backend: handle login through the API.
+      const { login } = await import("./js/auth.js");
+      const form = document.getElementById("loginForm");
+      form.addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const errBox = document.getElementById("loginError");
+        const btn = document.getElementById("loginBtn");
+        const btnText = document.getElementById("btnText");
+        errBox.classList.remove("show");
+        btn.disabled = true;
+        btnText.innerHTML = '<span class="btn-loader"></span> لاگ اِن ہو رہا ہے';
+
+        const email = document.getElementById("email").value.trim().toLowerCase();
+        const password = document.getElementById("password").value;
+        try {
+          const user = await login(email, password);
+          btnText.textContent = "✓ کامیاب!";
+          btn.style.background = "linear-gradient(135deg, #059669, #047857)";
+          const dest = user && user.role === "admin" ? "admin-dashboard.html" : "dashboard.html";
+          setTimeout(() => window.location.replace(dest), 300);
+        } catch (err) {
+          errBox.classList.add("show");
+          errBox.innerHTML = "&#9888; ای میل یا پاس ورڈ غلط ہے۔";
+          btn.disabled = false;
+          btnText.textContent = "لاگ اِن کریں";
+          btn.style.animation = "shake 0.4s ease";
+          setTimeout(() => { btn.style.animation = ""; }, 400);
+        }
+      });
+    } else if (DEMO_MODE) {
+      await import("./js/demo-store.js");
+      const raw = localStorage.getItem("jamia_demo_db_v2");
+      if (!raw) {
+        import("./js/demo-store.js").then(m => {
+          if (m.demoGetAllClasses) m.demoGetAllClasses();
+        });
+      }
+    }
+  </script>
+</body>
+</html>

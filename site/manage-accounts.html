@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اکاؤنٹس کا انتظام | جامعہ اسلامیہ کوکن</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/logo.png">
+  <script src="js/app-config.js"></script>
+  <script src="js/seed-demo.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>JamiaAuth.requireRole("admin");</script>
+</head>
+<body>
+  <div class="app">
+    <button class="menu-toggle" id="menuToggle" aria-label="menu">&#9776;</button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="Jamia">
+        <h2>جامعہ اسلامیہ کوکن</h2>
+      </div>
+      <ul class="menu">
+        <li><a href="admin-dashboard.html"><span class="ic">&#127968;</span> ڈیش بورڈ</a></li>
+        <li><a href="manage-accounts.html" class="active"><span class="ic">&#128100;</span> اکاؤنٹس</a></li>
+        <li><a href="manage-students.html"><span class="ic">&#128101;</span> طلبہ کا انتظام</a></li>
+        <li><a href="manage-holidays.html"><span class="ic">&#127796;</span> تعطیلات کا انتظام</a></li>
+        <li><a href="attendance-detail.html"><span class="ic">&#128197;</span> کسی بھی تاریخ کی حاضری</a></li>
+        <li><a href="student-search.html"><span class="ic">&#128269;</span> طالب علم تلاش کریں</a></li>
+        <li><a href="reports.html"><span class="ic">&#128202;</span> ماہانہ رپورٹ</a></li>
+        <li><a href="reset-data.html"><span class="ic">&#9888;</span> تمام ڈیٹا ری سیٹ</a></li>
+        <li><a href="#" id="logoutBtn"><span class="ic">&#128682;</span> لاگ آؤٹ</a></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="titles">
+          <h1>اکاؤنٹس کا انتظام</h1>
+          <div class="sub">نیا استاذ / مہتمم شامل کریں، پاس ورڈ تبدیل کریں</div>
+        </div>
+      </div>
+
+      <!-- Create new account -->
+      <div class="card" style="max-width:600px; margin:0 auto;">
+        <h3>&#10010; نیا اکاؤنٹ بنائیں</h3>
+        <form id="createForm">
+          <div class="form-group">
+            <label>نام (اردو میں)</label>
+            <input type="text" class="input" id="newName" placeholder="مثلاً: مولانا احمد صاحب" required>
+          </div>
+          <div class="form-group">
+            <label>ای میل</label>
+            <input type="email" class="input" id="newEmail" placeholder="مثلاً: ahmad@jamia.test" required>
+          </div>
+          <div class="form-group">
+            <label>پاس ورڈ</label>
+            <input type="text" class="input" id="newPassword" placeholder="کم از کم 6 حروف" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label>کردار (Role)</label>
+            <select class="input" id="newRole">
+              <option value="teacher">استاذ (Teacher)</option>
+              <option value="admin">مہتمم (Admin)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-block btn-lg" id="createBtn">&#10010; اکاؤنٹ بنائیں</button>
+        </form>
+      </div>
+
+      <!-- Existing accounts list -->
+      <div class="card" style="max-width:600px; margin:20px auto 0;">
+        <h3>&#128101; موجودہ اکاؤنٹس</h3>
+        <div id="accountsList">
+          <p style="text-align:center;color:var(--muted)">لوڈ ہو رہا ہے...</p>
+        </div>
+      </div>
+
+      <!-- Change password section -->
+      <div class="card" style="max-width:600px; margin:20px auto 0;">
+        <h3>&#128274; پاس ورڈ تبدیل کریں</h3>
+        <div class="form-group">
+          <label>اکاؤنٹ منتخب کریں</label>
+          <select class="input" id="passEmail">
+            <option value="">— منتخب کریں —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نیا پاس ورڈ</label>
+          <input type="text" class="input" id="newPass" placeholder="نیا پاس ورڈ لکھیں" minlength="6">
+        </div>
+        <button class="btn btn-block" id="changePassBtn">&#128274; پاس ورڈ تبدیل کریں</button>
+      </div>
+
+      <!-- Assign subjects (classes + sessions) to a teacher -->
+      <div class="card" style="max-width:600px; margin:20px auto 0;">
+        <h3>&#128218; اساتذہ کو مضامین / درجات تفویض کریں</h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.8;">
+          نیا اکاؤنٹ بنانے کے بعد استاذ کو درجہ اور وقت (صبح/دوپہر) تفویض کریں تاکہ اُن کے ڈیش بورڈ پر ذمہ داریاں ظاہر ہوں۔
+        </p>
+        <div class="form-group">
+          <label>استاذ منتخب کریں</label>
+          <select class="input" id="asgTeacher"><option value="">— منتخب کریں —</option></select>
+        </div>
+        <div id="asgCurrent" style="margin-bottom:12px;"></div>
+        <div class="form-group">
+          <label>&#9728; صبح کا درجہ / گروپ</label>
+          <select class="input" id="asgClassMorning"><option value="">— کوئی نہیں —</option></select>
+        </div>
+        <div class="form-group">
+          <label>&#127774; دوپہر کا درجہ / گروپ</label>
+          <select class="input" id="asgClassAfternoon"><option value="">— کوئی نہیں —</option></select>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:-4px 0 12px;">
+          استاذ کے پاس صبح اور دوپہر مختلف درجے ہو سکتے ہیں۔ صرف ایک وقت تفویض کرنا ہو تو دوسرا "کوئی نہیں" رہنے دیں۔
+        </p>
+        <button class="btn btn-block" id="assignBtn">&#10010; تفویض کریں</button>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </main>
+  </div>
+
+  <!-- Confirm delete modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <h3>&#9888; کیا آپ واقعی یہ اکاؤنٹ حذف کرنا چاہتے ہیں؟</h3>
+      <div class="stu-name" id="deleteEmail">—</div>
+      <div class="hint">یہ عمل واپس نہیں ہو سکتا۔</div>
+      <div class="actions">
+        <button class="btn btn-red" id="confirmDeleteBtn">&#128465; ہاں، حذف کریں</button>
+        <button class="btn btn-outline" id="cancelDeleteBtn">منسوخ کریں</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth, bindLogout } from "./js/auth.js";
+    import { createAccount, deleteAccount, getAllAccounts, changePassword,
+             getAllClasses, getAllAssignments, createAssignment, removeAssignment,
+             SESSIONS } from "./js/data.js";
+
+    let deleteTargetEmail = null;
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = "toast" + (isError ? " error" : "");
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 3000);
+    }
+
+    async function loadAccounts() {
+      const accounts = await getAllAccounts();
+      const list = document.getElementById("accountsList");
+      const passSelect = document.getElementById("passEmail");
+
+      if (!accounts.length) {
+        list.innerHTML = '<p style="text-align:center;color:var(--muted)">کوئی اکاؤنٹ نہیں ملا۔</p>';
+        return;
+      }
+
+      // Sort: admins first, then teachers
+      accounts.sort((a, b) => {
+        if (a.role === b.role) return a.name.localeCompare(b.name, "ur");
+        return a.role === "admin" ? -1 : 1;
+      });
+
+      list.innerHTML = accounts.map(a => `
+        <div class="student-list-item">
+          <div>
+            <span class="stu-name">${a.name}</span>
+            <div style="font-size:12px;color:var(--muted);">${a.email || "—"} &nbsp;|&nbsp; ${a.role === "admin" ? "🔑 مہتمم" : "📖 استاذ"}</div>
+          </div>
+          ${a.email !== "admin@jamia.test" ? `<button class="remove-btn" data-email="${a.email}">&#128465; حذف</button>` : '<span style="font-size:12px;color:var(--green);">اصل مہتمم</span>'}
+        </div>
+      `).join("");
+
+      // Bind delete buttons
+      list.querySelectorAll(".remove-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          deleteTargetEmail = btn.dataset.email;
+          document.getElementById("deleteEmail").textContent = btn.dataset.email;
+          document.getElementById("deleteModal").classList.add("show");
+        });
+      });
+
+      // Update password select dropdown
+      passSelect.innerHTML = '<option value="">— منتخب کریں —</option>' +
+        accounts.map(a => `<option value="${a.email}">${a.name} (${a.email || a.uid})</option>`).join("");
+
+      // Also refresh the teacher dropdown in the assign-subjects section.
+      populateTeacherSelect(accounts);
+    }
+
+    // ---- Assign subjects (classes + sessions) to teachers ----
+    let ALL_CLASSES = [];
+
+    function populateTeacherSelect(accounts) {
+      const sel = document.getElementById("asgTeacher");
+      const prev = sel.value;
+      const teachers = accounts.filter(a => a.role === "teacher")
+        .sort((a, b) => a.name.localeCompare(b.name, "ur"));
+      sel.innerHTML = '<option value="">— منتخب کریں —</option>' +
+        teachers.map(t => `<option value="${t.uid}">${t.name}</option>`).join("");
+      if (prev) sel.value = prev;
+    }
+
+    async function loadClassesForAssign() {
+      ALL_CLASSES = await getAllClasses();
+      ALL_CLASSES.sort((a, b) => a.name.localeCompare(b.name, "ur"));
+      const opts = ALL_CLASSES.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+      document.getElementById("asgClassMorning").innerHTML = '<option value="">— کوئی نہیں —</option>' + opts;
+      document.getElementById("asgClassAfternoon").innerHTML = '<option value="">— کوئی نہیں —</option>' + opts;
+    }
+
+    async function renderTeacherSubjects() {
+      const box = document.getElementById("asgCurrent");
+      const teacherId = document.getElementById("asgTeacher").value;
+      if (!teacherId) { box.innerHTML = ""; return; }
+      const all = await getAllAssignments();
+      const mine = all.filter(a => a.teacherId === teacherId);
+      if (!mine.length) {
+        box.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">ابھی کوئی مضمون تفویض نہیں ہوا۔</p>';
+        return;
+      }
+      box.innerHTML = '<p style="font-size:13px;color:var(--green-deep);font-weight:600;margin:4px 0;">موجودہ مضامین:</p>' +
+        mine.map(a => `
+          <div class="student-list-item">
+            <div><span class="stu-name">${a.className}</span>
+              <div style="font-size:12px;color:var(--muted);">${SESSIONS[a.session]}</div></div>
+            <button class="remove-btn" data-asg="${a.id}">&#128465; ہٹائیں</button>
+          </div>`).join("");
+      box.querySelectorAll(".remove-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await removeAssignment(btn.dataset.asg);
+            showToast("✓ مضمون ہٹا دیا گیا۔");
+            await renderTeacherSubjects();
+          } catch (err) { showToast("خرابی: " + (err.message || err), true); }
+        });
+      });
+    }
+
+    (async () => {
+      const user = await requireAuth("admin");
+      if (!user) return;
+      bindLogout();
+
+      await loadAccounts();
+      await loadClassesForAssign();
+
+      // Assign-subjects: react to teacher selection + add button.
+      document.getElementById("asgTeacher").addEventListener("change", renderTeacherSubjects);
+      document.getElementById("assignBtn").addEventListener("click", async () => {
+        const teacherId = document.getElementById("asgTeacher").value;
+        const morningClass = document.getElementById("asgClassMorning").value;
+        const afternoonClass = document.getElementById("asgClassAfternoon").value;
+        if (!teacherId) { showToast("پہلے استاذ منتخب کریں۔", true); return; }
+        if (!morningClass && !afternoonClass) { showToast("کم از کم ایک درجہ (صبح یا دوپہر) منتخب کریں۔", true); return; }
+
+        const btn = document.getElementById("assignBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+        try {
+          let count = 0;
+          if (morningClass) { await createAssignment(morningClass, "morning", teacherId); count++; }
+          if (afternoonClass) { await createAssignment(afternoonClass, "afternoon", teacherId); count++; }
+          showToast(count === 2 ? "✓ صبح اور دوپہر دونوں تفویض ہو گئے!" : "✓ مضمون تفویض ہو گیا!");
+          // reset the class pickers, keep the teacher selected
+          document.getElementById("asgClassMorning").value = "";
+          document.getElementById("asgClassAfternoon").value = "";
+          await renderTeacherSubjects();
+        } catch (err) {
+          showToast("خرابی: " + (err.message || err), true);
+        }
+        btn.disabled = false;
+        btn.innerHTML = "&#10010; تفویض کریں";
+      });
+
+      // Create account form
+      document.getElementById("createForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("newName").value.trim();
+        const email = document.getElementById("newEmail").value.trim();
+        const password = document.getElementById("newPassword").value;
+        const role = document.getElementById("newRole").value;
+
+        if (!name || !email || !password) {
+          showToast("تمام خانے پُر کریں۔", true);
+          return;
+        }
+        if (password.length < 6) {
+          showToast("پاس ورڈ کم از کم 6 حروف ہونا چاہیے۔", true);
+          return;
+        }
+
+        const btn = document.getElementById("createBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+
+        try {
+          const created = await createAccount(email, password, name, role);
+          document.getElementById("createForm").reset();
+          await loadAccounts();
+          // If a teacher was created, pre-select them in the assign section so
+          // the admin can add subjects next — WITHOUT scrolling the page away
+          // from the create form (that felt like the button "disappeared").
+          if (created && created.uid && role === "teacher") {
+            const asgSel = document.getElementById("asgTeacher");
+            if (asgSel) { asgSel.value = created.uid; await renderTeacherSubjects(); }
+            showToast("✓ اکاؤنٹ بن گیا — نیچے ”مضامین تفویض کریں“ میں اس استاذ کو منتخب کر لیا گیا ہے۔");
+          } else {
+            showToast("✓ اکاؤنٹ کامیابی سے بن گیا!");
+          }
+        } catch (err) {
+          if (err.code === "auth/email-already-in-use") {
+            showToast("یہ ای میل پہلے سے موجود ہے۔", true);
+          } else {
+            showToast("خرابی: " + (err.message || err), true);
+          }
+        }
+        btn.disabled = false;
+        btn.innerHTML = "&#10010; اکاؤنٹ بنائیں";
+      });
+
+      // Confirm delete
+      document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+        if (!deleteTargetEmail) return;
+        try {
+          await deleteAccount(deleteTargetEmail);
+          document.getElementById("deleteModal").classList.remove("show");
+          showToast("✓ اکاؤنٹ حذف ہو گیا۔");
+          await loadAccounts();
+        } catch (err) {
+          showToast("خرابی: " + (err.message || err), true);
+        }
+        deleteTargetEmail = null;
+      });
+
+      document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+        document.getElementById("deleteModal").classList.remove("show");
+        deleteTargetEmail = null;
+      });
+
+      // Change password
+      document.getElementById("changePassBtn").addEventListener("click", async () => {
+        const email = document.getElementById("passEmail").value;
+        const newPass = document.getElementById("newPass").value;
+        if (!email) { showToast("پہلے اکاؤنٹ منتخب کریں۔", true); return; }
+        if (!newPass || newPass.length < 6) { showToast("نیا پاس ورڈ کم از کم 6 حروف ہونا چاہیے۔", true); return; }
+
+        try {
+          await changePassword(email, newPass);
+          showToast("✓ پاس ورڈ تبدیل ہو گیا!");
+          document.getElementById("newPass").value = "";
+          document.getElementById("passEmail").value = "";
+        } catch (err) {
+          showToast("خرابی: " + (err.message || err), true);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
