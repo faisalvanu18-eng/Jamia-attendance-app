@@ -65,7 +65,7 @@
   </div>
   <script type="module">
     import { requireAuth, bindLogout } from "./js/auth.js";
-    import { getAssignmentsForTeacher, SESSIONS } from "./js/data.js";
+    import { getAssignmentsForTeacher, getAttendance, SESSIONS } from "./js/data.js";
 
     (async () => {
       const user = await requireAuth("teacher");
@@ -77,14 +77,33 @@
       const today = (window.JAMIA_TODAY || new Date().toISOString().slice(0, 10));
       const assigns = await getAssignmentsForTeacher(user.uid);
 
-      const card = (a) => `
-        <div class="duty-card">
+      // For each assignment, look up whether attendance is ALREADY marked for
+      // today's class/session. If so, the card shows a "marked — you can edit"
+      // state instead of a plain "Take attendance" button.
+      const card = (a) => {
+        const marked = !!(a._attendance && a._attendance.records &&
+          Object.keys(a._attendance.records).length);
+        const href = `mark-attendance.html?class=${a.classId}&session=${a.session}&date=${today}`;
+        const body = marked
+          ? `<div class="duty-marked">&#9989; حاضری لگ چکی ہے</div>
+             <div class="duty-marked-sub">اگر تبدیلی کرنی ہو تو ترمیم کریں۔</div>
+             <a class="btn btn-outline" href="${href}">&#9998; ترمیم کریں</a>`
+          : `<a class="btn" href="${href}">حاضری لگائیں</a>`;
+        return `
+        <div class="duty-card${marked ? " is-marked" : ""}">
           <div class="dtitle">${a.className}
             <span class="sun">${a.session === "morning" ? "&#9728;" : "&#127774;"}</span>
           </div>
           <div class="dtime">${SESSIONS[a.session]} کی حاضری</div>
-          <a class="btn" href="mark-attendance.html?class=${a.classId}&session=${a.session}&date=${today}">حاضری لگائیں</a>
+          ${body}
         </div>`;
+      };
+
+      // Fetch existing attendance for all assignments in parallel.
+      await Promise.all(assigns.map(async (a) => {
+        try { a._attendance = await getAttendance(today, a.classId, a.session); }
+        catch (e) { a._attendance = null; }
+      }));
 
       const morning = assigns.filter(a => a.session === "morning");
       const afternoon = assigns.filter(a => a.session === "afternoon");

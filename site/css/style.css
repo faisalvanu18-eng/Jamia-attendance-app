@@ -368,6 +368,20 @@ input, select, textarea { font-family: inherit; }
 .duty-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--green); }
 .duty-card .dtitle { font-family: var(--font-ur); font-size: 22px; color: var(--green-deep); }
 .duty-card .dtime { color: var(--muted); margin: 6px 0 14px; }
+/* Marked state: attendance already taken for today's class/session. */
+.duty-card.is-marked::before { background: var(--green); }
+.duty-card .duty-marked {
+  font-family: var(--font-ur);
+  color: var(--green-deep);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.duty-card .duty-marked-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
 .sun { color: var(--gold-active); }
 
 /* ===== Notes / alerts ===== */
