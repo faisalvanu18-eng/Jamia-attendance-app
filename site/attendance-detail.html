@@ -10,7 +10,6 @@
   <script src="js/app-config.js"></script>
   <script src="js/seed-demo.js"></script>
   <script src="js/auth-guard.js"></script>
-  <script src="js/pdf-export.js"></script>
   <script>JamiaAuth.requireLogin();</script>
 </head>
 <body>
@@ -38,7 +37,7 @@
             <input class="input" type="date" id="viewDate">
           </div>
           <button class="btn" id="viewBtn">دیکھیں</button>
-          <button class="btn btn-outline" onclick="JamiaPDF.export()">&#128424; پرنٹ / PDF</button>
+          <button class="btn btn-outline" onclick="window.print()">&#128424; پرنٹ / PDF</button>
         </div>
       </div>
 
@@ -46,7 +45,6 @@
       <div id="content"><p style="text-align:center;color:var(--muted)">لوڈ ہو رہا ہے...</p></div>
     </main>
   </div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
     import { requireAuth, bindLogout } from "./js/auth.js";
