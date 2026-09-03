@@ -824,7 +824,7 @@ table.tbl { min-width: 320px; }
 
 
 /* ============================================================
-   Splash / loading screen (shown on every page load / reload)
+   Splash / loading screen — premium look
    ============================================================ */
 #jamiaSplash {
   position: fixed;
@@ -835,11 +835,10 @@ table.tbl { min-width: 320px; }
   justify-content: center;
   overflow: hidden;
   background:
-    radial-gradient(1000px 600px at 85% 8%, rgba(216,173,51,0.22), transparent 60%),
-    radial-gradient(900px 600px at 10% 95%, rgba(18,128,90,0.30), transparent 60%),
-    linear-gradient(160deg, #0b5138 0%, #0a4a33 45%, #062418 100%);
+    radial-gradient(1100px 700px at 50% 30%, #0f5f42 0%, transparent 60%),
+    linear-gradient(165deg, #0b5138 0%, #093c2a 50%, #041c13 100%);
   opacity: 1;
-  transition: opacity 0.55s ease, visibility 0.55s ease;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 #jamiaSplash.splash-hide {
   opacity: 0;
@@ -847,23 +846,15 @@ table.tbl { min-width: 320px; }
   pointer-events: none;
 }
 
-/* Soft animated background blobs for depth. */
-#jamiaSplash .splash-bg { position: absolute; inset: 0; pointer-events: none; }
-#jamiaSplash .splash-blob {
+/* Soft gold glow behind the logo. */
+#jamiaSplash .splash-glow {
   position: absolute;
+  width: 520px;
+  height: 520px;
   border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.5;
-}
-#jamiaSplash .splash-blob.b1 {
-  width: 340px; height: 340px; top: -80px; right: -60px;
-  background: radial-gradient(circle, rgba(216,173,51,0.45), transparent 70%);
-  animation: splashFloat 9s ease-in-out infinite;
-}
-#jamiaSplash .splash-blob.b2 {
-  width: 300px; height: 300px; bottom: -70px; left: -50px;
-  background: radial-gradient(circle, rgba(18,128,90,0.55), transparent 70%);
-  animation: splashFloat 11s ease-in-out infinite reverse;
+  background: radial-gradient(circle, rgba(216,173,51,0.20) 0%, rgba(216,173,51,0.06) 40%, transparent 70%);
+  animation: splashPulse 3.2s ease-in-out infinite;
+  pointer-events: none;
 }
 
 #jamiaSplash .splash-content {
@@ -872,52 +863,52 @@ table.tbl { min-width: 320px; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   padding: 24px;
 }
 
-/* Logo with a glowing, breathing ring. */
-#jamiaSplash .splash-logo-ring {
+/* Logo, centered inside a thin rotating accent ring. */
+#jamiaSplash .splash-logo-wrap {
   position: relative;
-  width: 148px;
-  height: 148px;
+  width: 150px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  animation: splashPop 0.8s cubic-bezier(.22,1,.36,1) both;
+  animation: splashPop 0.75s cubic-bezier(.22,1,.36,1) both;
 }
-#jamiaSplash .splash-ring-glow {
+#jamiaSplash .splash-ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  padding: 3px;
-  background: conic-gradient(from 0deg, var(--gold-active,#d8ad33), var(--green,#12805a), var(--gold-active,#d8ad33));
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
-          mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
-  animation: splashSpin 3.5s linear infinite;
+  border: 2px solid rgba(255,255,255,0.12);
+  border-top-color: var(--gold-active, #d8ad33);
+  border-right-color: var(--gold-active, #d8ad33);
+  animation: splashSpin 1.4s linear infinite;
 }
-#jamiaSplash .splash-logo {
+#jamiaSplash .splash-logo-disc {
   width: 116px;
   height: 116px;
-  object-fit: contain;
   border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  padding: 12px;
-  box-shadow: 0 12px 46px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  box-shadow: 0 14px 44px rgba(0,0,0,0.4), 0 0 0 6px rgba(255,255,255,0.06);
+}
+#jamiaSplash .splash-logo {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
 }
 #jamiaSplash .splash-name {
   font-family: var(--font-ur);
   font-size: 32px;
   font-weight: 700;
   text-align: center;
-  line-height: 1.7;
-  background: linear-gradient(90deg, #ffffff 0%, var(--gold-soft,#f4e4b8) 100%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: #fff;
-  text-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  line-height: 1.8;
+  color: #ffffff;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.35);
   animation: splashFadeUp 0.7s ease 0.15s both;
 }
 #jamiaSplash .splash-sub {
@@ -929,44 +920,29 @@ table.tbl { min-width: 320px; }
   animation: splashFadeUp 0.7s ease 0.28s both;
 }
 
-/* Bouncing dots. */
-#jamiaSplash .splash-dots {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-  animation: splashFadeUp 0.7s ease 0.4s both;
-}
-#jamiaSplash .splash-dots span {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--gold-active, #d8ad33);
-  animation: splashBounce 1s ease-in-out infinite;
-}
-#jamiaSplash .splash-dots span:nth-child(2) { animation-delay: 0.15s; }
-#jamiaSplash .splash-dots span:nth-child(3) { animation-delay: 0.3s; }
-
-/* Indeterminate progress bar. */
+/* Slim indeterminate progress bar. */
 #jamiaSplash .splash-bar {
-  width: 200px;
-  max-width: 60vw;
+  width: 210px;
+  max-width: 62vw;
   height: 4px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.14);
   overflow: hidden;
-  margin-top: 10px;
-  animation: splashFadeUp 0.7s ease 0.5s both;
+  margin-top: 6px;
+  animation: splashFadeUp 0.7s ease 0.42s both;
 }
 #jamiaSplash .splash-bar span {
   display: block;
   width: 40%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--gold-active,#d8ad33), var(--green,#12805a));
-  animation: splashSlide 1.3s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, var(--gold-active,#d8ad33), #fff, var(--gold-active,#d8ad33), transparent);
+  animation: splashSlide 1.4s ease-in-out infinite;
 }
 
 @keyframes splashPop {
-  0%   { transform: scale(0.6); opacity: 0; }
-  60%  { transform: scale(1.06); opacity: 1; }
+  0%   { transform: scale(0.7); opacity: 0; }
+  60%  { transform: scale(1.05); opacity: 1; }
   100% { transform: scale(1); }
 }
 @keyframes splashFadeUp {
@@ -974,28 +950,25 @@ table.tbl { min-width: 320px; }
   to   { transform: translateY(0); opacity: 1; }
 }
 @keyframes splashSpin { to { transform: rotate(360deg); } }
-@keyframes splashFloat {
-  0%, 100% { transform: translate(0,0); }
-  50%      { transform: translate(20px,-24px); }
-}
-@keyframes splashBounce {
-  0%, 100% { transform: translateY(0); opacity: 0.6; }
-  50%      { transform: translateY(-8px); opacity: 1; }
+@keyframes splashPulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.75; }
+  50%      { transform: scale(1.06); opacity: 1; }
 }
 @keyframes splashSlide {
-  0%   { transform: translateX(-120%); }
-  100% { transform: translateX(320%); }
+  0%   { transform: translateX(-140%); }
+  100% { transform: translateX(360%); }
 }
 @media (max-width: 480px) {
-  #jamiaSplash .splash-logo-ring { width: 120px; height: 120px; }
-  #jamiaSplash .splash-logo { width: 92px; height: 92px; }
+  #jamiaSplash .splash-glow { width: 360px; height: 360px; }
+  #jamiaSplash .splash-logo-wrap { width: 124px; height: 124px; }
+  #jamiaSplash .splash-logo-disc { width: 96px; height: 96px; }
+  #jamiaSplash .splash-logo { width: 74px; height: 74px; }
   #jamiaSplash .splash-name { font-size: 25px; }
   #jamiaSplash .splash-sub { font-size: 15px; }
 }
 /* Respect users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  #jamiaSplash .splash-blob,
-  #jamiaSplash .splash-ring-glow,
-  #jamiaSplash .splash-dots span,
+  #jamiaSplash .splash-glow,
+  #jamiaSplash .splash-ring,
   #jamiaSplash .splash-bar span { animation: none; }
 }

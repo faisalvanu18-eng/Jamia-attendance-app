@@ -17,20 +17,16 @@
     el.setAttribute("role", "status");
     el.setAttribute("aria-label", "لوڈ ہو رہا ہے");
     el.innerHTML =
-      '<div class="splash-bg" aria-hidden="true">' +
-        '<span class="splash-blob b1"></span>' +
-        '<span class="splash-blob b2"></span>' +
-      '</div>' +
+      '<div class="splash-glow" aria-hidden="true"></div>' +
       '<div class="splash-content">' +
-        '<div class="splash-logo-ring">' +
-          '<span class="splash-ring-glow" aria-hidden="true"></span>' +
-          '<img class="splash-logo" src="assets/logo.png" alt="Jamia Logo">' +
+        '<div class="splash-logo-wrap">' +
+          '<span class="splash-ring" aria-hidden="true"></span>' +
+          '<span class="splash-logo-disc">' +
+            '<img class="splash-logo" src="assets/logo.png" alt="Jamia Logo">' +
+          '</span>' +
         '</div>' +
         '<div class="splash-name">جامعہ اسلامیہ کوکن کانبلہ</div>' +
         '<div class="splash-sub">طلبہ کی حاضری کا نظام</div>' +
-        '<div class="splash-dots" aria-hidden="true">' +
-          '<span></span><span></span><span></span>' +
-        '</div>' +
         '<div class="splash-bar" aria-hidden="true"><span></span></div>' +
       '</div>';
     (document.body || document.documentElement).appendChild(el);
