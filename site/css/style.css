@@ -926,11 +926,11 @@ table.tbl { min-width: 320px; }
   animation: splashFadeUp 0.7s ease 0.28s both;
 }
 
-/* Slim indeterminate progress bar. */
+/* Determinate progress bar driven by the percentage counter. */
 #jamiaSplash .splash-bar {
   width: 210px;
   max-width: 62vw;
-  height: 4px;
+  height: 5px;
   border-radius: 999px;
   background: rgba(255,255,255,0.14);
   overflow: hidden;
@@ -939,11 +939,20 @@ table.tbl { min-width: 320px; }
 }
 #jamiaSplash .splash-bar span {
   display: block;
-  width: 40%;
+  width: 0%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--gold-active,#d8ad33), #fff, var(--gold-active,#d8ad33), transparent);
-  animation: splashSlide 1.4s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--green,#12805a), var(--gold-active,#d8ad33));
+  transition: width 0.12s linear;
+}
+#jamiaSplash .splash-pct {
+  font-family: 'Inter', sans-serif;
+  color: var(--gold-soft, #f4e4b8);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  animation: splashFadeUp 0.7s ease 0.5s both;
 }
 
 @keyframes splashPop {

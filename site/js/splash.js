@@ -27,9 +27,28 @@
         '</div>' +
         '<div class="splash-name">جامعہ اسلامیہ کوکن کانبلہ</div>' +
         '<div class="splash-sub">طلبہ کی حاضری کا نظام</div>' +
-        '<div class="splash-bar" aria-hidden="true"><span></span></div>' +
+        '<div class="splash-bar" aria-hidden="true"><span id="jamiaSplashFill"></span></div>' +
+        '<div class="splash-pct" id="jamiaSplashPct">0%</div>' +
       '</div>';
     (document.body || document.documentElement).appendChild(el);
+    startProgress();
+  }
+
+  // Animate a 0% -> 100% counter over MIN_VISIBLE_MS, updating both the
+  // percentage text and the bar fill width.
+  var progressTimer = null;
+  function startProgress() {
+    if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+    var pctEl = document.getElementById("jamiaSplashPct");
+    var fillEl = document.getElementById("jamiaSplashFill");
+    var began = Date.now();
+    progressTimer = setInterval(function () {
+      var elapsed = Date.now() - began;
+      var pct = Math.min(100, Math.round((elapsed / MIN_VISIBLE_MS) * 100));
+      if (pctEl) pctEl.textContent = pct + "%";
+      if (fillEl) fillEl.style.width = pct + "%";
+      if (pct >= 100) { clearInterval(progressTimer); progressTimer = null; }
+    }, 30);
   }
 
   function hide() {
@@ -69,6 +88,7 @@
       inject();
       var el = document.getElementById("jamiaSplash");
       if (el) el.classList.remove("splash-hide");
+      startProgress();
       scheduleHide();
     }
   });
