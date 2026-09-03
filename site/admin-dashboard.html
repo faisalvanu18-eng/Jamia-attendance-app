@@ -6,6 +6,7 @@
   <title>مہتمم صاحب کا ڈیش بورڈ | جامعہ اسلامیہ کوکن</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="assets/logo.png">
+  <script src="js/ui-kit.js"></script>
   <script src="js/app-config.js"></script>
   <script src="js/seed-demo.js"></script>
   <script src="js/auth-guard.js"></script>
@@ -126,15 +127,19 @@
       document.getElementById("viewDate").addEventListener("change", e =>
         document.getElementById("viewDateBtn").href = "attendance-detail.html?date=" + e.target.value);
 
-      // Session totals
+      // Show skeleton placeholders while data loads.
+      UIKit.tableSkeleton("absentRows", { rows: 4, cols: 5 });
+      UIKit.listSkeleton("pendingBox", 3);
+
+      // Session totals (animate the numbers counting up).
       const docs = await getAttendanceByDate(today);
       const acc = { morning: { t: 0, p: 0, a: 0 }, afternoon: { t: 0, p: 0, a: 0 } };
       docs.forEach(d => {
         const k = acc[d.session]; if (!k || !d.summary) return;
         k.t += d.summary.total; k.p += d.summary.present; k.a += d.summary.absent;
       });
-      mTotal.textContent = acc.morning.t; mPresent.textContent = acc.morning.p; mAbsent.textContent = acc.morning.a;
-      aTotal.textContent = acc.afternoon.t; aPresent.textContent = acc.afternoon.p; aAbsent.textContent = acc.afternoon.a;
+      UIKit.countUp("mTotal", acc.morning.t); UIKit.countUp("mPresent", acc.morning.p); UIKit.countUp("mAbsent", acc.morning.a);
+      UIKit.countUp("aTotal", acc.afternoon.t); UIKit.countUp("aPresent", acc.afternoon.p); UIKit.countUp("aAbsent", acc.afternoon.a);
 
       // Absent students today
       const absent = await getAbsentByDate(today);
@@ -147,13 +152,19 @@
             <td>${SESSIONS[r.session]}</td>
             <td class="${r.reason === 'leave' ? 'status-leave' : 'status-absent'}">${REASONS[r.reason] || 'دیگر'}</td>
           </tr>`).join("")
-        : '<tr><td colspan="5" style="color:var(--green)">آج تک کوئی غیر حاضری درج نہیں۔</td></tr>';
+        : `<tr><td colspan="5">${UIKit.emptyState({
+            title: "کوئی غیر حاضری نہیں",
+            text: "آج تک کسی طالب علم کی غیر حاضری درج نہیں ہوئی۔"
+          })}</td></tr>`;
 
       // Pending (past-deadline only)
       const pending = await getPending(today, true);
       const pBox = document.getElementById("pendingBox");
       if (!pending.length) {
-        pBox.innerHTML = '<p style="text-align:center;color:var(--green)">تمام واجب حاضریاں مکمل ہیں۔</p>';
+        pBox.innerHTML = UIKit.emptyState({
+          title: "سب مکمل",
+          text: "تمام واجب حاضریاں مکمل ہیں۔"
+        });
       } else {
         const group = (s) => pending.filter(p => p.session === s);
         const render = (label, icon, arr) => arr.length ? `

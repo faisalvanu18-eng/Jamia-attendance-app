@@ -990,3 +990,124 @@ table.tbl { min-width: 320px; }
   #jamiaSplash .splash-ring,
   #jamiaSplash .splash-bar span { animation: none; }
 }
+
+/* ============================================================
+   UI KIT — skeletons, toasts, empty states, focus rings
+   (additive utilities; safe to use on any page)
+   ============================================================ */
+
+/* ---- Skeleton loaders ---- */
+.skeleton {
+  position: relative;
+  background: linear-gradient(90deg, #e9eeeb 25%, #f3f7f4 37%, #e9eeeb 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.3s ease-in-out infinite;
+  border-radius: 8px;
+}
+.skeleton-line { height: 14px; margin: 8px 0; }
+.skeleton-line.sm { width: 40%; }
+.skeleton-line.md { width: 65%; }
+.skeleton-line.lg { width: 85%; }
+.skeleton-circle { width: 44px; height: 44px; border-radius: 50%; }
+.skeleton-row { display: flex; align-items: center; gap: 14px; padding: 12px 4px; }
+.skeleton-row .skeleton-lines { flex: 1; }
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+/* Skeleton cell used inside a loading table row. */
+td .skeleton-line { margin: 0; }
+
+/* ---- Toast notifications (namespaced ui-toast to avoid clashing with the
+       older .toast element used on some pages) ---- */
+#uiToastHost {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  width: min(420px, calc(100vw - 32px));
+}
+.ui-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-lg);
+  font-size: 15px;
+  animation: toastIn 0.35s var(--ease-out) both;
+  border-right: 5px solid var(--green);
+}
+.ui-toast.leaving { animation: toastOut 0.3s ease forwards; }
+.ui-toast .toast-ic {
+  width: 30px; height: 30px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; color: #fff; font-size: 16px; font-weight: 700;
+  background: var(--green);
+}
+.ui-toast .toast-msg { flex: 1; line-height: 1.6; }
+.ui-toast.toast-success { border-right-color: var(--green); }
+.ui-toast.toast-success .toast-ic { background: var(--green); }
+.ui-toast.toast-error   { border-right-color: var(--red); }
+.ui-toast.toast-error   .toast-ic { background: var(--red); }
+.ui-toast.toast-info    { border-right-color: var(--gold-active); }
+.ui-toast.toast-info    .toast-ic { background: var(--gold-active); color: #2c2205; }
+@keyframes toastIn  { from { opacity: 0; transform: translateY(-14px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(-10px) scale(0.97); } }
+
+/* ---- Empty states ---- */
+.empty-state {
+  text-align: center;
+  padding: 34px 20px;
+  color: var(--muted);
+}
+.empty-state .empty-ic {
+  width: 64px; height: 64px; margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 20px;
+  background: var(--green-light);
+  color: var(--green);
+}
+.empty-state .empty-ic svg { width: 30px; height: 30px; }
+.empty-state .empty-title { font-size: 17px; color: var(--green-deep); font-weight: 600; margin-bottom: 4px; }
+.empty-state .empty-text { font-size: 14px; }
+.empty-state .btn { margin-top: 14px; }
+
+/* ---- In-button loading spinner ---- */
+.btn .btn-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: #fff;
+  display: inline-block;
+  animation: splashSpin 0.7s linear infinite;
+}
+.btn-outline .btn-spinner, .btn-gold .btn-spinner { border-color: rgba(8,48,31,0.3); border-top-color: var(--green-deep); }
+
+/* ---- Accessible focus rings ---- */
+.btn:focus-visible,
+.link-card:focus-visible,
+.tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(216,173,51,0.5), var(--shadow-sm);
+}
+.input:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(18,128,90,0.18);
+}
+
+/* ---- Stat card polish (used by dashboards) ---- */
+.stat { transition: transform var(--transition), box-shadow var(--transition); }
+.stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
