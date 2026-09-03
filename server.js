@@ -568,10 +568,25 @@ app.get("/api/holiday-status", auth, wrap(async (req, res) => {
 }));
 
 // ---------- health check ----------
-app.get("/api/health", wrap(async (req, res) => {
-  await query("SELECT 1");
-  res.json({ ok: true });
-}));
+// LIVENESS: must NOT depend on the database. Render's health check only needs
+// to confirm the web process is up and serving HTTP. If this touched the DB and
+// the DB was briefly slow/unreachable at boot, the health check would hang and
+// the deploy would "Time Out" even though the server is running fine.
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, uptime: process.uptime() });
+});
+
+// READINESS: a deeper check that also verifies the database is reachable.
+// Use this for diagnostics, not as the Render health check path.
+app.get("/api/health/db", async (req, res) => {
+  try {
+    await query("SELECT 1");
+    res.json({ ok: true, db: "up" });
+  } catch (err) {
+    console.error("[health] db check failed:", err.message);
+    res.status(503).json({ ok: false, db: "down", message: err.message });
+  }
+});
 
 // ============================================================
 //  STATIC SITE

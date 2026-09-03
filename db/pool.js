@@ -33,7 +33,11 @@ const pool = new Pool({
   connectionString,
   ssl: useSSL ? { rejectUnauthorized: false } : false,
   max: Number(process.env.PG_POOL_MAX || 10),
-  idleTimeoutMillis: 30000
+  idleTimeoutMillis: 30000,
+  // Fail fast instead of hanging forever if the DB is unreachable. This keeps
+  // requests (and the readiness check) from blocking indefinitely at boot.
+  connectionTimeoutMillis: Number(process.env.PG_CONN_TIMEOUT_MS || 10000),
+  statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT_MS || 15000)
 });
 
 pool.on("error", (err) => {
