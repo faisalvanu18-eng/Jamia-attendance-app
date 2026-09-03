@@ -7,7 +7,7 @@
 //    <script src="js/splash.js"></script>
 // ============================================================
 (function () {
-  var MIN_VISIBLE_MS = 3000;  // minimum time the splash stays on screen
+  var MIN_VISIBLE_MS = 5000;  // minimum time the splash stays on screen
   var start = Date.now();
 
   function inject() {
@@ -74,5 +74,5 @@
   });
 
   // Safety net: never let the splash get stuck.
-  setTimeout(hide, 6000);
+  setTimeout(hide, 8000);
 })();
