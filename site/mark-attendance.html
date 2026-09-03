@@ -42,6 +42,14 @@
         "بعد میں درج شدہ" کے طور پر نظر آئے گا۔
       </div>
 
+      <!-- Shown when attendance for this class/date/session ALREADY exists.
+           The teacher sees the saved record (read-only) and an Edit button,
+           instead of a fresh marking form. -->
+      <div id="submittedBanner" class="note" style="display:none; background:#eafaf1; border:2px solid var(--green); border-right-color:var(--green); color:#1d5237; font-weight:600; text-align:center; padding:16px;">
+        &#9989; اس درجہ/وقت/تاریخ کی حاضری پہلے ہی محفوظ ہو چکی ہے۔<br>
+        <span style="font-size:14px;font-weight:500;">تبدیلی کے لیے "ترمیم کریں" دبائیں۔ نیا ریکارڈ نہیں بنے گا — یہی ریکارڈ اپ ڈیٹ ہوگا۔</span>
+      </div>
+
       <div id="holidayBanner" class="note" style="display:none; background:#fdecea; border:2px solid #e74c3c; color:#c0392b; font-weight:700; font-size:18px; text-align:center; padding:18px;"></div>
 
       <div id="infoNote" class="note">
@@ -66,6 +74,7 @@
 
       <div id="saveError" class="note error" style="display:none;margin-bottom:12px;" role="alert"></div>
       <div class="actions" id="actionsRow">
+        <button class="btn btn-lg" id="editBtn" style="display:none;">&#9998; ترمیم کریں</button>
         <button class="btn btn-lg" id="saveBtn">&#128190; حاضری محفوظ کریں</button>
         <button class="btn btn-outline" onclick="location.reload()">&#8635; دوبارہ ترتیب</button>
       </div>
@@ -101,6 +110,35 @@
     const nameEl = document.getElementById("reasonStudentName");
     let currentChk = null;
     const marks = {}; // studentId -> { status:'absent', reason }
+
+    // Tracks whether an attendance record already exists in the backend.
+    // The BACKEND is the single source of truth — we never rely on
+    // localStorage / history state to decide this.
+    let alreadySubmitted = false;
+    let editing = false;
+
+    // Put the student rows into read-only (view) or editable (mark/edit) mode.
+    function setEditable(canEdit) {
+      editing = canEdit;
+      document.querySelectorAll("#studentRows .absent-chk").forEach(chk => {
+        chk.disabled = !canEdit;
+      });
+      const saveBtn = document.getElementById("saveBtn");
+      const editBtn = document.getElementById("editBtn");
+      if (alreadySubmitted && !canEdit) {
+        // Submitted + not editing: show Edit, hide Save.
+        editBtn.style.display = "";
+        saveBtn.style.display = "none";
+      } else {
+        // Fresh form, or editing an existing record.
+        editBtn.style.display = "none";
+        saveBtn.style.display = "";
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = alreadySubmitted
+          ? "&#128190; تبدیلیاں محفوظ کریں"   // "Save changes" (update)
+          : "&#128190; حاضری محفوظ کریں";      // "Save attendance" (new)
+      }
+    }
 
     (async () => {
       const user = await requireAuth();
@@ -166,8 +204,13 @@
         return;
       }
 
-      // Pre-fill from any previously saved attendance for this date/class/session.
+      // ---- BACKEND CHECK (source of truth) ----
+      // Read any existing attendance for this exact date/class/session.
+      // If it exists, this page becomes a "view + edit" screen instead of a
+      // fresh marking form, so revisiting (via back button, refresh, direct
+      // URL, or a link) can never create a duplicate record.
       const existing = await getAttendance(date, classId, session);
+      alreadySubmitted = !!(existing && existing.records && Object.keys(existing.records).length);
 
       tbody.innerHTML = students.map((s, i) => {
         const rec = existing && existing.records ? existing.records[s.id] : null;
@@ -184,8 +227,18 @@
         </tr>`;
       }).join("");
 
+      // If a record already exists, present the "already submitted" state.
+      if (alreadySubmitted) {
+        document.getElementById("submittedBanner").style.display = "block";
+        document.getElementById("infoNote").style.display = "none";
+        setEditable(false);        // read-only until the teacher taps "Edit"
+      } else {
+        setEditable(true);         // fresh form
+      }
+
       tbody.querySelectorAll(".absent-chk").forEach(chk => {
         chk.addEventListener("change", function () {
+          if (this.disabled) return;
           if (this.checked) {
             currentChk = this; nameEl.textContent = this.dataset.name; overlay.classList.add("show");
           } else {
@@ -210,12 +263,24 @@
         overlay.classList.remove("show");
       });
 
+      // "Edit" turns the read-only record back into an editable form. Saving
+      // then UPDATES the same backend row (upsert) — no duplicate is created.
+      document.getElementById("editBtn").addEventListener("click", () => {
+        document.getElementById("submittedBanner").innerHTML =
+          "&#9998; ترمیم کی حالت — تبدیلیاں کر کے \"تبدیلیاں محفوظ کریں\" دبائیں۔ یہی ریکارڈ اپ ڈیٹ ہوگا۔";
+        document.getElementById("infoNote").style.display = "block";
+        setEditable(true);
+      });
+
       document.getElementById("saveBtn").addEventListener("click", async () => {
+        if (!editing) return;
         const records = {};
         students.forEach(s => { records[s.id] = marks[s.id] || { status: "present", reason: "" }; });
         const btn = document.getElementById("saveBtn");
         btn.disabled = true; btn.textContent = "محفوظ ہو رہا ہے...";
         try {
+          // The API upserts by deterministic id (date__class__session), so this
+          // creates the record if new, or updates the existing one — never a duplicate.
           const saved = await saveAttendance({ date, classId, session, records, markedBy: user.uid });
           localStorage.setItem("lastSaved", JSON.stringify({
             classId, className: cls ? cls.name : classId, session, sessionLabel: SESSIONS[session],
@@ -226,10 +291,21 @@
           const msg = err.serverMessage || err.message || err.code || "نامعلوم خرابی";
           const errorBox = document.getElementById("saveError");
           if (errorBox) { errorBox.textContent = "محفوظ کرنے میں خرابی: " + msg; errorBox.style.display = "block"; }
-          btn.disabled = false; btn.textContent = "حاضری محفوظ کریں";
+          btn.disabled = false;
+          btn.innerHTML = alreadySubmitted ? "&#128190; تبدیلیاں محفوظ کریں" : "&#128190; حاضری محفوظ کریں";
         }
       });
     })();
+
+    // ---- Back button / bfcache safety ----
+    // When the page is restored from the browser's back-forward cache (e.g. the
+    // teacher submits, navigates away, then presses Android/browser BACK), the
+    // DOM is frozen from before submission. Reload so the BACKEND is re-checked
+    // and the "already submitted / edit" state is shown — the restored form can
+    // never behave as a new submission. We do NOT disable the back button.
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted) location.reload();
+    });
   </script>
 </body>
 </html>

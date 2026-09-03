@@ -670,9 +670,22 @@ table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
 
 @media (max-width: 820px) {
   .menu-toggle { display: flex; align-items: center; justify-content: center; }
-  .sidebar { position: fixed; top: 0; right: 0; bottom: 0; transform: translateX(100%); transition: transform 0.32s var(--ease-out); z-index: 50; width: 280px; box-shadow: -8px 0 32px rgba(0,0,0,.3); }
+  .sidebar {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    transform: translateX(100%);
+    transition: transform 0.32s var(--ease-out);
+    z-index: 50; width: 280px; max-width: 85vw;
+    box-shadow: -8px 0 32px rgba(0,0,0,.3);
+    /* Let the whole sidebar scroll vertically when the menu is taller than
+       the screen, so every menu item stays reachable on small phones. */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
   .sidebar.open { transform: translateX(0); }
   .sidebar.open ~ .sidebar-backdrop { display: block; }
+  /* The menu list itself scrolls if needed; brand stays at the top. */
+  .menu { flex: 1 0 auto; }
   .main { padding: 74px 16px 24px; }
   .topbar { flex-direction: column; padding: 16px; }
   .welcome-box { width: 100%; }
@@ -722,3 +735,63 @@ table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
 .modal-close { position:absolute; top:10px; left:12px; width:34px; height:34px; border:0; background:transparent; color:var(--muted); font-size:25px; cursor:pointer; border-radius:8px; }
 .modal-close:hover, .modal-close:focus-visible { background:rgba(0,0,0,.05); color:var(--text); outline:none; }
 @media (max-width: 520px) { .logout-modal { padding:28px 20px 22px; } .logout-modal-actions { flex-direction:column; } .logout-modal-actions .btn { width:100%; } }
+
+/* ============================================================
+   RESPONSIVE HARDENING (mobile 320–430px)
+   Additive rules only — prevents horizontal overflow, keeps tables,
+   forms, modals and buttons inside the viewport, and guarantees the
+   sidebar menu is fully scrollable. Does not alter desktop layout.
+   ============================================================ */
+
+/* Never allow the page to scroll sideways. */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* Media never overflows its container. */
+img, svg, table, video { max-width: 100%; }
+
+/* Wide data tables scroll horizontally *inside their card* instead of
+   pushing the whole page wider than the screen. */
+.card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.tbl { min-width: 320px; }
+
+/* Long words / student names wrap instead of forcing horizontal scroll. */
+.name-cell { word-break: break-word; overflow-wrap: anywhere; }
+
+@media (max-width: 430px) {
+  body { font-size: 15px; }
+  .main { padding: 70px 12px 20px; }
+  .topbar { padding: 14px 12px; margin-bottom: 18px; }
+  .topbar .titles h1 { font-size: 23px; }
+  .card { padding: 18px 14px; border-radius: 18px; }
+  .card h3 { font-size: 19px; }
+  .section-title { font-size: 20px; }
+
+  /* Buttons stay inside the screen and are easy to tap. */
+  .btn { padding: 13px 18px; font-size: 15px; }
+  .btn-lg { padding: 14px 20px; font-size: 16px; }
+  .actions { flex-direction: column; }
+  .actions .btn { width: 100%; }
+
+  /* Forms / date pickers fill the width and never overflow. */
+  .input, select.input { font-size: 16px; } /* 16px avoids iOS zoom */
+  .date-viewer { flex-direction: column; align-items: stretch; }
+  .date-viewer .btn { width: 100%; }
+
+  /* Compact table so it fits without breaking the layout. */
+  table.tbl { min-width: 0; }
+  table.tbl th, table.tbl td { padding: 10px 6px; font-size: 14px; }
+
+  /* Modals sit fully inside the viewport. */
+  .modal { padding: 22px 18px; max-width: calc(100vw - 24px); }
+  .reason-btn { padding: 14px 16px; font-size: 16px; }
+
+  /* Grids collapse to a single column on tiny screens. */
+  .stats-row, .links-grid { grid-template-columns: 1fr; }
+}
+
+/* Very small phones (≤360px): tighten a little more. */
+@media (max-width: 360px) {
+  .topbar .titles h1 { font-size: 21px; }
+  .sidebar { width: 92vw; max-width: 92vw; }
+  table.tbl th, table.tbl td { padding: 9px 5px; font-size: 13.5px; }
+}

@@ -12,6 +12,9 @@
   <style>
     .login-page {
       min-height: 100vh;
+      /* Use dynamic viewport height on mobile so the browser chrome
+         (address bar) never causes the lower section to be clipped. */
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -21,27 +24,36 @@
         linear-gradient(160deg, #0a4a33 0%, #08301f 100%);
       padding: 20px;
       position: relative;
-      overflow: hidden;
+      /* Allow vertical scrolling so the LOWER section (footer info) is always
+         reachable when the card is taller than the viewport. Horizontal
+         overflow stays hidden so the decorative blobs don't create a scrollbar. */
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .login-page::before {
       content: '';
-      position: absolute;
+      position: fixed;
       top: -30%;
       left: -30%;
       width: 80%;
       height: 80%;
       background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
       animation: float 12s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
     }
     .login-page::after {
       content: '';
-      position: absolute;
+      position: fixed;
       bottom: -20%;
       right: -20%;
       width: 60%;
       height: 60%;
       background: radial-gradient(circle, rgba(201,162,39,0.05) 0%, transparent 70%);
       animation: float 10s ease-in-out infinite reverse;
+      pointer-events: none;
+      z-index: 0;
     }
     @keyframes float {
       0%, 100% { transform: translate(0, 0); }
@@ -52,6 +64,10 @@
       max-width: 460px;
       position: relative;
       z-index: 1;
+      /* margin:auto centers the card when there is spare space, but lets it
+         scroll from the top when the content is taller than the viewport
+         (so the lower footer section is never cut off). */
+      margin: auto;
       animation: scaleIn 0.5s ease;
     }
     .login-card {
@@ -266,10 +282,13 @@
       80% { transform: translateX(4px); }
     }
     @media (max-width: 520px) {
+      .login-page { padding: 16px 14px; align-items: flex-start; }
+      .login-container { margin: 0 auto; }
       .login-card { padding: 32px 24px 28px; border-radius: 20px; }
       .login-card .logo-section img { width: 72px; height: 72px; }
       .login-card .logo-section h1 { font-size: 22px; }
       .login-card .field input { padding: 14px 44px 14px 14px; }
+      .login-footer-info { margin-bottom: 8px; }
     }
   </style>
 </head>
