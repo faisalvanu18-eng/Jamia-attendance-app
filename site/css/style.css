@@ -727,30 +727,37 @@ table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
   .welcome-box { width: 100%; }
   .menu li a { padding: 15px 16px; font-size: 17px; }
   table.tbl th, table.tbl td { padding: 12px 6px; font-size: 15px; }
-  /* On phones the student-name column is the important one, so give it the
-     most room and let the small columns (number / status / reason) shrink to
-     fit their short content. word-break:keep-all above keeps Urdu words whole. */
+  /* On phones the student-name column is the important one. Force the small
+     columns (number / status / reason) to fixed narrow widths and let the
+     name column take everything that is left, on a single line. */
   table.tbl { table-layout: fixed; width: 100%; }
-  /* Name column dominates the row so long Urdu names stay on one line. */
+  /* Name column: take all remaining space and keep the whole name on ONE line. */
   table.tbl th.name-cell, table.tbl td.name-cell {
-    width: 60%;
-    font-size: 16px;
+    width: auto;
+    white-space: nowrap;
+    font-size: 15px;
     padding-right: 8px;
-    padding-left: 8px;
+    padding-left: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  /* Status / reason / other small columns: narrow and content-hugging.
-     Override any wide inline width set on the header cells. */
-  table.tbl th:not(.name-cell), table.tbl td:not(.name-cell) {
-    width: auto !important;
+  /* Number column – tiny. */
+  table.tbl th:first-child:not(.name-cell), table.tbl td:first-child:not(.name-cell) {
+    width: 34px !important;
     font-size: 13px;
-    padding-right: 4px;
-    padding-left: 4px;
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+  /* Status / reason and any other non-name columns – thin fixed width. */
+  table.tbl th:not(.name-cell):not(:first-child),
+  table.tbl td:not(.name-cell):not(:first-child) {
+    width: 68px !important;
+    font-size: 12.5px;
+    padding-right: 3px;
+    padding-left: 3px;
     word-break: keep-all;
     overflow-wrap: normal;
-  }
-  /* Number column is the smallest. */
-  table.tbl th:first-child:not(.name-cell), table.tbl td:first-child:not(.name-cell) {
-    width: 36px !important;
+    white-space: normal;
   }
   .chk { width: 28px; height: 28px; }
   .btn { padding: 14px 22px; }
