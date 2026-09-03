@@ -12,6 +12,7 @@
     "dev": "node --watch server.js",
     "migrate": "node db/migrate.js",
     "seed": "node db/seed.js",
+    "import-students": "node db/import-students.js",
     "setup": "node db/migrate.js && node db/seed.js"
   },
   "dependencies": {
