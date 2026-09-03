@@ -13,11 +13,14 @@
  *
  * Strategy:
  *   1. Lazy-load html2pdf.js (html2canvas + jsPDF) from a CDN the
- *      first time the user taps the button. This produces a REAL
- *      downloadable .pdf file – the most reliable option on phones.
- *      The DOM is rasterised as-is, so the bundled Urdu / Nastaliq
- *      font renders correctly and RTL layout is preserved.
- *   2. If the library cannot be loaded (offline, blocked CDN), fall
+ *      first time the user taps the button.
+ *   2. Build the report as a PDF Blob and OPEN IT IN A NEW TAB so the
+ *      user can PREVIEW it first (in the browser's built-in PDF viewer)
+ *      and download it from there only if they want to. Nothing is
+ *      downloaded automatically. The DOM is rasterised as-is, so the
+ *      bundled Urdu / Nastaliq font renders correctly and RTL layout
+ *      is preserved.
+ *   3. If the library cannot be loaded (offline, blocked CDN), fall
  *      back to the native window.print() so desktop users are never
  *      worse off than before.
  *
@@ -94,6 +97,23 @@
     var target = pickTarget(opts.targetId);
     var filename = buildFilename(opts.filename);
 
+    // Open a blank tab RIGHT NOW, synchronously inside the click handler.
+    // Mobile browsers only allow window.open() during a user gesture, so we
+    // must open it before the async PDF work starts, then point it at the
+    // generated PDF once it is ready. This gives a PREVIEW first – the user
+    // views the PDF and downloads it from the viewer only if they want to.
+    var previewWin = window.open("", "_blank");
+    if (previewWin && previewWin.document) {
+      previewWin.document.write(
+        '<!doctype html><html><head><meta charset="utf-8">' +
+          '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+          "<title>PDF</title></head>" +
+          '<body style="margin:0;font-family:sans-serif;background:#f4f4f4;' +
+          'display:flex;align-items:center;justify-content:center;height:100vh;' +
+          'color:#12805a;font-size:18px;">PDF تیار ہو رہا ہے...</body></html>'
+      );
+    }
+
     toast("PDF تیار ہو رہا ہے...");
 
     loadHtml2Pdf()
@@ -122,21 +142,38 @@
           pagebreak: { mode: ["css", "legacy"], avoid: ".card" },
         };
 
+        // Build the PDF as a Blob so we can SHOW it (preview) instead of
+        // forcing an immediate download.
         return html2pdf()
           .set(options)
           .from(target)
-          .save()
-          .then(function () {
+          .outputPdf("blob")
+          .then(function (blob) {
             // Restore hidden elements.
             for (var j = 0; j < hidden.length; j++) {
               hidden[j][0].style.display = hidden[j][1];
             }
+
+            var url = URL.createObjectURL(blob);
+            if (previewWin && !previewWin.closed) {
+              // Show the PDF in the tab we opened on click.
+              previewWin.location.href = url;
+            } else {
+              // Popup was blocked – open in the same tab as a preview.
+              window.location.href = url;
+            }
+            toast("PDF تیار ہے۔");
+            // Release the object URL later; the viewer keeps its own copy.
+            setTimeout(function () {
+              URL.revokeObjectURL(url);
+            }, 60000);
           });
       })
       .catch(function (err) {
         // Could not build a PDF (offline / CDN blocked). Fall back to
         // the browser's native print dialog so nothing is lost.
         console.warn("PDF export failed, falling back to print():", err);
+        if (previewWin && !previewWin.closed) previewWin.close();
         try {
           window.print();
         } catch (e) {
