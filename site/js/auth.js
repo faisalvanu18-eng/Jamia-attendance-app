@@ -51,10 +51,13 @@ export async function login(email, password, remember = true) {
 }
 
 export async function logout() {
-  if (API_MODE) { apiLogout(); location.href = "index.html"; return; }
-  if (DEMO_MODE) { demoLogout(); location.href = "index.html"; return; }
+  // Use location.replace (not href) so the authenticated page is removed from
+  // browser history. This prevents the "press Back after logout reopens the
+  // protected page / logout popup" problem for both teachers and admins.
+  if (API_MODE) { apiLogout(); location.replace("index.html"); return; }
+  if (DEMO_MODE) { demoLogout(); location.replace("index.html"); return; }
   await signOut(auth);
-  location.href = "index.html";
+  location.replace("index.html");
 }
 
 function ensureLogoutModal() {
@@ -95,6 +98,9 @@ function ensureLogoutModal() {
   el.querySelector("[data-logout-confirm]").addEventListener("click", async () => {
     const b = el.querySelector("[data-logout-confirm]");
     b.disabled = true;
+    // Hide the modal before navigating so a bfcache restore of this page can
+    // never show the logout popup again.
+    el.classList.remove("show");
     await logout();
   });
   el.addEventListener("click", (e) => { if (e.target === el) close(); });

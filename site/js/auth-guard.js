@@ -33,6 +33,7 @@
         window.location.replace("index.html");
         return null;
       }
+      this._armPageShowGuard(null);
       return user;
     },
     requireRole: function(role) {
@@ -45,7 +46,28 @@
         window.location.replace(user.role === "admin" ? "admin-dashboard.html" : "dashboard.html");
         return null;
       }
+      this._armPageShowGuard(role);
       return user;
+    },
+    // Re-check auth when this page is restored from the browser's back-forward
+    // cache (e.g. the user logs out, then presses BACK). Without this, the
+    // frozen protected page would reappear. If the session is gone, send the
+    // user to the login page. Applies to both teacher and admin pages.
+    _armPageShowGuard: function(role) {
+      if (this._pageShowGuardArmed) return;
+      this._pageShowGuardArmed = true;
+      var self = this;
+      window.addEventListener("pageshow", function(event) {
+        if (!event.persisted) return; // only when restored from bfcache
+        var user = self.getCurrentUser();
+        if (!user) {
+          window.location.replace("index.html");
+          return;
+        }
+        if (role && user.role !== role) {
+          window.location.replace(user.role === "admin" ? "admin-dashboard.html" : "dashboard.html");
+        }
+      });
     },
     logout: function() {
       localStorage.removeItem(SESSION_KEY);
