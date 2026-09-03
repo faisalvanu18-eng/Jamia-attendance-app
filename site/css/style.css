@@ -748,7 +748,9 @@ table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
 /* Production UI additions */
 .ui-icon { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 .ic, .lic, .field-icon, .r-ic { display: inline-flex; align-items: center; justify-content: center; }
-.ic .ui-icon, .lic .ui-icon { margin-inline-end: 7px; }
+/* Icons inside a centered badge should have no side margin, otherwise they
+   shift off-center. Spacing to the label is handled by the parent's gap. */
+.ic .ui-icon, .lic .ui-icon { margin: 0; }
 .logout-modal-overlay { z-index: 9999; }
 .logout-modal { width: min(430px, calc(100vw - 32px)); text-align: center; position: relative; padding: 32px; }
 .logout-modal:focus { outline: none; }
