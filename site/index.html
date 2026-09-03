@@ -82,8 +82,21 @@
     }
     .login-card::before {
       content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 5px;
-      background: linear-gradient(90deg, var(--green), var(--gold-active), var(--green));
+      position: absolute;
+      inset: 0;
+      border-radius: 26px;
+      padding: 4px; /* thickness of the gradient border */
+      background: linear-gradient(135deg, var(--green), var(--gold-active), var(--green));
+      /* Show only the border ring by masking out the filled center. */
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+              mask-composite: exclude;
+      pointer-events: none;
     }
     .login-card .logo-section {
       text-align: center;
