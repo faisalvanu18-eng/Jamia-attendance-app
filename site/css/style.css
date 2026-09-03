@@ -809,3 +809,82 @@ table.tbl { min-width: 320px; }
   .sidebar { width: 92vw; max-width: 92vw; }
   table.tbl th, table.tbl td { padding: 9px 5px; font-size: 13.5px; }
 }
+
+
+/* ============================================================
+   Splash / loading screen (shown briefly on page load)
+   ============================================================ */
+#jamiaSplash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background:
+    radial-gradient(900px 500px at 85% 10%, rgba(216,173,51,0.20), transparent 60%),
+    radial-gradient(800px 500px at 10% 90%, rgba(18,128,90,0.28), transparent 60%),
+    linear-gradient(160deg, #0a4a33 0%, #08301f 100%);
+  opacity: 1;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#jamiaSplash.splash-hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+#jamiaSplash .splash-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  padding: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35), 0 0 0 3px rgba(216,173,51,0.35);
+  animation: splashPop 0.7s cubic-bezier(.22,1,.36,1) both;
+}
+#jamiaSplash .splash-name {
+  font-family: var(--font-ur);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.6;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  animation: splashFadeUp 0.7s ease 0.15s both;
+}
+#jamiaSplash .splash-sub {
+  font-family: var(--font-ur);
+  color: var(--gold-soft, #f4e4b8);
+  font-size: 17px;
+  text-align: center;
+  animation: splashFadeUp 0.7s ease 0.28s both;
+}
+#jamiaSplash .splash-spinner {
+  width: 40px;
+  height: 40px;
+  margin-top: 6px;
+  border: 3px solid rgba(255,255,255,0.25);
+  border-top-color: var(--gold-active, #d8ad33);
+  border-radius: 50%;
+  animation: splashSpin 0.9s linear infinite;
+}
+@keyframes splashPop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes splashFadeUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes splashSpin {
+  to { transform: rotate(360deg); }
+}
+@media (max-width: 480px) {
+  #jamiaSplash .splash-logo { width: 96px; height: 96px; }
+  #jamiaSplash .splash-name { font-size: 24px; }
+  #jamiaSplash .splash-sub { font-size: 15px; }
+}
