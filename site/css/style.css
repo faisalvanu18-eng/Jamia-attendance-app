@@ -890,6 +890,7 @@ table.tbl { min-width: 320px; }
   width: 116px;
   height: 116px;
   border-radius: 50%;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -897,9 +898,11 @@ table.tbl { min-width: 320px; }
   box-shadow: 0 14px 44px rgba(0,0,0,0.4), 0 0 0 6px rgba(255,255,255,0.06);
 }
 #jamiaSplash .splash-logo {
-  width: 92px;
-  height: 92px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  border-radius: 50%;
+  background: #ffffff;
 }
 #jamiaSplash .splash-name {
   font-family: var(--font-ur);
@@ -962,7 +965,7 @@ table.tbl { min-width: 320px; }
   #jamiaSplash .splash-glow { width: 360px; height: 360px; }
   #jamiaSplash .splash-logo-wrap { width: 124px; height: 124px; }
   #jamiaSplash .splash-logo-disc { width: 96px; height: 96px; }
-  #jamiaSplash .splash-logo { width: 74px; height: 74px; }
+  #jamiaSplash .splash-logo { width: 100%; height: 100%; }
   #jamiaSplash .splash-name { font-size: 25px; }
   #jamiaSplash .splash-sub { font-size: 15px; }
 }
