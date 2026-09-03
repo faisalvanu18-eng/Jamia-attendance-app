@@ -430,7 +430,7 @@ app.post("/api/reset", auth, requireRole("admin"), wrap(async (req, res) => {
   }
 
   // Re-verify the CURRENT admin's password.
-  const { rows } = await query("SELECT password_hash FROM users WHERE id = $1", [req.user.uid]);
+  const { rows } = await query("SELECT id, email, password_hash, name FROM users WHERE id = $1", [req.user.uid]);
   const me = rows[0];
   if (!me || !bcrypt.compareSync(password, me.password_hash)) {
     return res.status(401).json({ error: "wrong_password" });
@@ -441,8 +441,24 @@ app.post("/api/reset", auth, requireRole("admin"), wrap(async (req, res) => {
     await client.query("BEGIN");
     // Clear everything. TRUNCATE ... CASCADE also clears dependent rows.
     await client.query("TRUNCATE attendance, assignments, students, holidays, classes, users CASCADE");
-    // Restore the base seed (admin, teachers, classes, assignments, sample students).
-    const stats = await seedDatabase(client);
+    // Restore the base seed (classes, etc.). skipAdmin:true because the
+    // reset preserves the CURRENT admin account below, so it must not
+    // require SEED_ADMIN_PASSWORD to be configured on the server.
+    const stats = await seedDatabase(client, { skipAdmin: true });
+    // Preserve the CURRENT admin's account (same email + password) so the
+    // admin who performed the reset is never locked out. This overwrites any
+    // admin row that seedDatabase may have created from the env config, and
+    // means the reset does not depend on SEED_ADMIN_PASSWORD being set.
+    await client.query(
+      `INSERT INTO users (id, email, password_hash, name, role)
+       VALUES ($1, $2, $3, $4, 'admin')
+       ON CONFLICT (id) DO UPDATE
+         SET email = EXCLUDED.email,
+             password_hash = EXCLUDED.password_hash,
+             name = EXCLUDED.name,
+             role = 'admin'`,
+      [me.id, me.email, me.password_hash, me.name]
+    );
     await client.query("COMMIT");
     res.json({ ok: true, restored: stats });
   } catch (err) {

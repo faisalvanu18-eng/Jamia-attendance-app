@@ -30,28 +30,35 @@ const CLASSES = {
 };
 
 // ------------------------------------------------------------
-//  seedDatabase(client)
-//  Upserts ONLY the admin account and the class definitions.
-//  Runs inside the caller's transaction if given a client; the
-//  caller manages BEGIN/COMMIT.
+//  seedDatabase(client, opts)
+//  Upserts the class definitions and (unless skipped) the admin
+//  account. Runs inside the caller's transaction if given a client;
+//  the caller manages BEGIN/COMMIT.
+//
+//  opts.skipAdmin (default false): when true, the admin account is
+//  NOT created/required here. Used by the "reset all data" flow,
+//  which preserves the CURRENT admin account itself and therefore
+//  must not depend on SEED_ADMIN_PASSWORD being configured.
 // ------------------------------------------------------------
-async function seedDatabase(client) {
+async function seedDatabase(client, opts = {}) {
   const q = (text, params) => client.query(text, params);
 
-  // Admin credentials are configurable. Production must not fall back to a known password.
-  const adminEmail = String(process.env.SEED_ADMIN_EMAIL || (process.env.NODE_ENV === "production" ? "" : "admin@jamia.test")).trim().toLowerCase();
-  const adminPassword = String(process.env.SEED_ADMIN_PASSWORD || (process.env.NODE_ENV === "production" ? "" : "admin123"));
-  const adminName = String(process.env.SEED_ADMIN_NAME || "حضرت مولانا اسحاق گھارے صاحب").trim();
-  if (!adminEmail || !adminPassword || adminPassword.length < 10) {
-    throw new Error("SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD (10+ characters) are required when seeding production.");
+  if (!opts.skipAdmin) {
+    // Admin credentials are configurable. Production must not fall back to a known password.
+    const adminEmail = String(process.env.SEED_ADMIN_EMAIL || (process.env.NODE_ENV === "production" ? "" : "admin@jamia.test")).trim().toLowerCase();
+    const adminPassword = String(process.env.SEED_ADMIN_PASSWORD || (process.env.NODE_ENV === "production" ? "" : "admin123456"));
+    const adminName = String(process.env.SEED_ADMIN_NAME || "حضرت مولانا اسحاق گھارے صاحب").trim();
+    if (!adminEmail || !adminPassword || adminPassword.length < 10) {
+      throw new Error("SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD (10+ characters) are required when seeding production.");
+    }
+    const adminHash = bcrypt.hashSync(adminPassword, 12);
+    await q(
+      `INSERT INTO users (id, email, password_hash, name, role)
+       VALUES ('uadmin', $1, $2, $3, 'admin')
+       ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email, password_hash=EXCLUDED.password_hash, name=EXCLUDED.name, role=EXCLUDED.role`,
+      [adminEmail, adminHash, adminName]
+    );
   }
-  const adminHash = bcrypt.hashSync(adminPassword, 12);
-  await q(
-    `INSERT INTO users (id, email, password_hash, name, role)
-     VALUES ('uadmin', $1, $2, $3, 'admin')
-     ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email, password_hash=EXCLUDED.password_hash, name=EXCLUDED.name, role=EXCLUDED.role`,
-    [adminEmail, adminHash, adminName]
-  );
 
   // Classes
   for (const [id, c] of Object.entries(CLASSES)) {
