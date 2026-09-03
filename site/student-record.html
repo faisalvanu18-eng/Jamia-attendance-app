@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="assets/logo.png">
   <script src="js/ui-kit.js"></script>
+  <script src="js/pdf-export.js"></script>
 </head>
 <body>
   <div class="app">
@@ -39,7 +40,7 @@
       <div class="topbar no-print">
         <div class="titles"><h1>طالب علم کا حاضری ریکارڈ</h1></div>
         <div class="actions" style="margin:0;">
-          <button class="btn btn-red" onclick="window.print()">&#128196; PDF / پرنٹ</button>
+          <button class="btn btn-red" onclick="JamiaPDF.export()">&#128196; PDF / پرنٹ</button>
           <a href="student-search.html" class="btn btn-outline">واپس</a>
         </div>
       </div>
@@ -69,6 +70,7 @@
       </div>
     </main>
   </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
     import { requireAuth, bindLogout } from "./js/auth.js";
