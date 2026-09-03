@@ -935,6 +935,10 @@ table.tbl { min-width: 320px; }
   background: rgba(255,255,255,0.14);
   overflow: hidden;
   margin-top: 6px;
+  /* Force left-to-right fill even though the page is RTL. */
+  direction: ltr;
+  display: flex;
+  justify-content: flex-start;
   animation: splashFadeUp 0.7s ease 0.42s both;
 }
 #jamiaSplash .splash-bar span {
