@@ -1,21 +1,13 @@
 // ============================================================
 //  Splash / loading screen
 //  ------------------------------------------------------------
-//  Shows the madrasa logo + name for a brief moment on page load,
+//  Shows the madrasa logo + name on EVERY page load / reload,
 //  then fades out. Non-module so it runs early on every page.
 //  Include it in <head> AFTER the stylesheet:
 //    <script src="js/splash.js"></script>
 // ============================================================
 (function () {
-  // Don't show the splash more than once per browsing session so navigating
-  // between internal pages stays snappy. Remove this block if you want it on
-  // every single page load.
-  try {
-    if (sessionStorage.getItem("jamiaSplashShown")) return;
-    sessionStorage.setItem("jamiaSplashShown", "1");
-  } catch (e) { /* sessionStorage unavailable — just show it */ }
-
-  var MIN_VISIBLE_MS = 1500; // minimum time the splash stays on screen
+  var MIN_VISIBLE_MS = 1400;  // minimum time the splash stays on screen
   var start = Date.now();
 
   function inject() {
@@ -25,10 +17,22 @@
     el.setAttribute("role", "status");
     el.setAttribute("aria-label", "لوڈ ہو رہا ہے");
     el.innerHTML =
-      '<img class="splash-logo" src="assets/logo.png" alt="Jamia Logo">' +
-      '<div class="splash-name">جامعہ اسلامیہ کوکن</div>' +
-      '<div class="splash-sub">طلبہ کی حاضری کا نظام</div>' +
-      '<div class="splash-spinner" aria-hidden="true"></div>';
+      '<div class="splash-bg" aria-hidden="true">' +
+        '<span class="splash-blob b1"></span>' +
+        '<span class="splash-blob b2"></span>' +
+      '</div>' +
+      '<div class="splash-content">' +
+        '<div class="splash-logo-ring">' +
+          '<span class="splash-ring-glow" aria-hidden="true"></span>' +
+          '<img class="splash-logo" src="assets/logo.png" alt="Jamia Logo">' +
+        '</div>' +
+        '<div class="splash-name">جامعہ اسلامیہ کوکن</div>' +
+        '<div class="splash-sub">طلبہ کی حاضری کا نظام</div>' +
+        '<div class="splash-dots" aria-hidden="true">' +
+          '<span></span><span></span><span></span>' +
+        '</div>' +
+        '<div class="splash-bar" aria-hidden="true"><span></span></div>' +
+      '</div>';
     (document.body || document.documentElement).appendChild(el);
   }
 
@@ -60,6 +64,18 @@
   } else {
     window.addEventListener("load", scheduleHide);
   }
+
+  // Re-show the splash when the page is restored from the back/forward cache
+  // (so a BACK navigation also gets the loading screen), then hide it again.
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+      start = Date.now();
+      inject();
+      var el = document.getElementById("jamiaSplash");
+      if (el) el.classList.remove("splash-hide");
+      scheduleHide();
+    }
+  });
 
   // Safety net: never let the splash get stuck.
   setTimeout(hide, 6000);
