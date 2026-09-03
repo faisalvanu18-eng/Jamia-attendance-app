@@ -430,7 +430,17 @@ table.tbl tr:last-child td { border-bottom: none; }
 table.tbl tbody tr:nth-child(even) td { background: #faf9f5; }
 table.tbl tbody tr:hover td { background: var(--green-mint); }
 table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
-.name-cell { text-align: right; font-weight: 600; color: var(--green-deep); }
+.name-cell {
+  text-align: right;
+  font-weight: 600;
+  color: var(--green-deep);
+  /* Urdu names must stay readable: never split a single word across lines.
+     Wrapping is only allowed at spaces between words. */
+  word-break: keep-all;
+  overflow-wrap: normal;
+  white-space: normal;
+  line-height: 1.9;
+}
 
 .chk { width: 22px; height: 22px; accent-color: var(--green); cursor: pointer; transition: transform var(--transition); }
 .chk:hover { transform: scale(1.18); }
@@ -716,7 +726,13 @@ table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
   .topbar { flex-direction: column; padding: 16px; }
   .welcome-box { width: 100%; }
   .menu li a { padding: 15px 16px; font-size: 17px; }
-  table.tbl th, table.tbl td { padding: 12px 8px; font-size: 15px; }
+  table.tbl th, table.tbl td { padding: 12px 6px; font-size: 15px; }
+  /* On phones the student-name column is the important one, so give it the
+     most room and let the small columns (number / status / reason) shrink.
+     word-break:keep-all above ensures each Urdu word stays on one line. */
+  table.tbl { table-layout: fixed; }
+  .name-cell { width: auto; min-width: 42%; font-size: 16px; padding-right: 8px; padding-left: 8px; }
+  table.tbl th:not(.name-cell), table.tbl td:not(.name-cell) { font-size: 14px; }
   .chk { width: 28px; height: 28px; }
   .btn { padding: 14px 22px; }
   .duty-card .dtitle { font-size: 22px; }
