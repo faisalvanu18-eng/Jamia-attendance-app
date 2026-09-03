@@ -26,7 +26,7 @@
           '<span class="splash-ring-glow" aria-hidden="true"></span>' +
           '<img class="splash-logo" src="assets/logo.png" alt="Jamia Logo">' +
         '</div>' +
-        '<div class="splash-name">جامعہ اسلامیہ کوکن</div>' +
+        '<div class="splash-name">جامعہ اسلامیہ کوکن کانبلہ</div>' +
         '<div class="splash-sub">طلبہ کی حاضری کا نظام</div>' +
         '<div class="splash-dots" aria-hidden="true">' +
           '<span></span><span></span><span></span>' +
