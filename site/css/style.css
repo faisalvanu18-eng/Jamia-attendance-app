@@ -441,6 +441,8 @@ table.tbl tbody tr { animation: fadeIn 0.3s ease forwards; }
   white-space: normal;
   line-height: 1.9;
 }
+/* The "طالب علم" heading itself is centered in its column. */
+th.name-cell { text-align: center; }
 
 .chk { width: 22px; height: 22px; accent-color: var(--green); cursor: pointer; transition: transform var(--transition); }
 .chk:hover { transform: scale(1.18); }
